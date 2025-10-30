@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\cwuom\source\repos\zydis\build\CMakeFiles\30a28860d6b1336c2303d051e41685cf\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{62C29CCB-B53D-3F91-9B28-C38AA5E06F74}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

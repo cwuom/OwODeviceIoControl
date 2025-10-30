@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\network">
+      <UniqueIdentifier>{ca7d7201-8bc7-447d-a15d-067ff48b24e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\game">
+      <UniqueIdentifier>{0fafb1d5-3ba1-4b52-8361-f4f5f0a36e1e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\framework">
+      <UniqueIdentifier>{d39c7f7e-795c-4e6c-b6a4-a6031e3eaf73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\network">
+      <UniqueIdentifier>{5a2d779d-0543-49ef-87d5-12b7301da276}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\game">
+      <UniqueIdentifier>{b2e3d84a-8c0f-45ad-bb62-9f7ab73a38e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\decryption">
+      <UniqueIdentifier>{83c62a74-6f72-4330-856c-84887f475368}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\config">
+      <UniqueIdentifier>{d17fe3f3-26b6-4e99-a2c8-45830790a6fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\config">
+      <UniqueIdentifier>{90314b81-3e55-4481-8af4-50b7bdaf5ed5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\RTModel">
+      <UniqueIdentifier>{a996a479-fda5-4425-95fb-1a28b59b22b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\RTModel">
+      <UniqueIdentifier>{59db7814-b3f8-41f5-b2c6-753c9cb318a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\peloader">
+      <UniqueIdentifier>{81c5083c-bb52-410d-9bfd-8a474a18d0d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\peloader">
+      <UniqueIdentifier>{65469429-ae82-4906-ad26-5d2bcee2076c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\util">
+      <UniqueIdentifier>{2ebd55ed-ccec-44e3-a5b7-3e281a200c77}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GameTypes.h">
+      <Filter>头文件\game</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkServer.cpp">
+      <Filter>源文件\network</Filter>
+    </ClCompile>
+    <ClCompile Include="client.cpp">
+      <Filter>源文件\network</Filter>
+    </ClCompile>
+    <ClCompile Include="GameLogic.cpp">
+      <Filter>源文件\game</Filter>
+    </ClCompile>
+    <ClCompile Include="Config.cpp">
+      <Filter>源文件\config</Filter>
+    </ClCompile>
+    <ClCompile Include="RTModel.cpp">
+      <Filter>源文件\RTModel</Filter>
+    </ClCompile>
+    <ClCompile Include="pe_loader.cpp">
+      <Filter>源文件\peloader</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils.cpp">
+      <Filter>源文件\util</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="common_packets.h">
+      <Filter>头文件\network</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkServer.h">
+      <Filter>头文件\network</Filter>
+    </ClInclude>
+    <ClInclude Include="client.h">
+      <Filter>头文件\network</Filter>
+    </ClInclude>
+    <ClInclude Include="GameLogic.h">
+      <Filter>头文件\game</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>头文件\framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Offsets.h">
+      <Filter>头文件\game</Filter>
+    </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>头文件\config</Filter>
+    </ClInclude>
+    <ClInclude Include="RTModel.h">
+      <Filter>头文件\RTModel</Filter>
+    </ClInclude>
+    <ClInclude Include="pe_loader.hpp">
+      <Filter>头文件\peloader</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
