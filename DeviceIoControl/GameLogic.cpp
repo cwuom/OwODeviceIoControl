@@ -92,77 +92,77 @@ bool GameLogic::initialize() {
 
 uintptr_t GameLogic::GetRegisterValue(PCONTEXT context, ZydisRegister reg) {
     switch (reg) {
-    case ZYDIS_REGISTER_RAX: return context->Rax;
-    case ZYDIS_REGISTER_RBX: return context->Rbx;
-    case ZYDIS_REGISTER_RCX: return context->Rcx;
-    case ZYDIS_REGISTER_RDX: return context->Rdx;
-    case ZYDIS_REGISTER_RSI: return context->Rsi;
-    case ZYDIS_REGISTER_RDI: return context->Rdi;
-    case ZYDIS_REGISTER_RBP: return context->Rbp;
-    case ZYDIS_REGISTER_RSP: return context->Rsp;
-    case ZYDIS_REGISTER_R8:  return context->R8;
-    case ZYDIS_REGISTER_R9:  return context->R9;
-    case ZYDIS_REGISTER_R10: return context->R10;
-    case ZYDIS_REGISTER_R11: return context->R11;
-    case ZYDIS_REGISTER_R12: return context->R12;
-    case ZYDIS_REGISTER_R13: return context->R13;
-    case ZYDIS_REGISTER_R14: return context->R14;
-    case ZYDIS_REGISTER_R15: return context->R15;
-    case ZYDIS_REGISTER_EAX: return context->Rax & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_EBX: return context->Rbx & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_ECX: return context->Rcx & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_EDX: return context->Rdx & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_ESI: return context->Rsi & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_EDI: return context->Rdi & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_EBP: return context->Rbp & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_ESP: return context->Rsp & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R8D: return context->R8 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R9D: return context->R9 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R10D: return context->R10 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R11D: return context->R11 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R12D: return context->R12 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R13D: return context->R13 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R14D: return context->R14 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R15D: return context->R15 & 0xFFFFFFFF;
-    default: return 0;
+	    case ZYDIS_REGISTER_RAX: return context->Rax;
+	    case ZYDIS_REGISTER_RBX: return context->Rbx;
+	    case ZYDIS_REGISTER_RCX: return context->Rcx;
+	    case ZYDIS_REGISTER_RDX: return context->Rdx;
+	    case ZYDIS_REGISTER_RSI: return context->Rsi;
+	    case ZYDIS_REGISTER_RDI: return context->Rdi;
+	    case ZYDIS_REGISTER_RBP: return context->Rbp;
+	    case ZYDIS_REGISTER_RSP: return context->Rsp;
+	    case ZYDIS_REGISTER_R8:  return context->R8;
+	    case ZYDIS_REGISTER_R9:  return context->R9;
+	    case ZYDIS_REGISTER_R10: return context->R10;
+	    case ZYDIS_REGISTER_R11: return context->R11;
+	    case ZYDIS_REGISTER_R12: return context->R12;
+	    case ZYDIS_REGISTER_R13: return context->R13;
+	    case ZYDIS_REGISTER_R14: return context->R14;
+	    case ZYDIS_REGISTER_R15: return context->R15;
+	    case ZYDIS_REGISTER_EAX: return context->Rax & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_EBX: return context->Rbx & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_ECX: return context->Rcx & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_EDX: return context->Rdx & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_ESI: return context->Rsi & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_EDI: return context->Rdi & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_EBP: return context->Rbp & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_ESP: return context->Rsp & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R8D: return context->R8 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R9D: return context->R9 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R10D: return context->R10 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R11D: return context->R11 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R12D: return context->R12 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R13D: return context->R13 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R14D: return context->R14 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R15D: return context->R15 & 0xFFFFFFFF;
+	    default: return 0;
     }
 }
 
 void GameLogic::SetRegisterValue(PCONTEXT context, ZydisRegister reg, uintptr_t value) {
     switch (reg) {
-    case ZYDIS_REGISTER_RAX: context->Rax = value; break;
-    case ZYDIS_REGISTER_RBX: context->Rbx = value; break;
-    case ZYDIS_REGISTER_RCX: context->Rcx = value; break;
-    case ZYDIS_REGISTER_RDX: context->Rdx = value; break;
-    case ZYDIS_REGISTER_RSI: context->Rsi = value; break;
-    case ZYDIS_REGISTER_RDI: context->Rdi = value; break;
-    case ZYDIS_REGISTER_RBP: context->Rbp = value; break;
-    case ZYDIS_REGISTER_RSP: context->Rsp = value; break;
-    case ZYDIS_REGISTER_R8:  context->R8 = value; break;
-    case ZYDIS_REGISTER_R9:  context->R9 = value; break;
-    case ZYDIS_REGISTER_R10: context->R10 = value; break;
-    case ZYDIS_REGISTER_R11: context->R11 = value; break;
-    case ZYDIS_REGISTER_R12: context->R12 = value; break;
-    case ZYDIS_REGISTER_R13: context->R13 = value; break;
-    case ZYDIS_REGISTER_R14: context->R14 = value; break;
-    case ZYDIS_REGISTER_R15: context->R15 = value; break;
-    case ZYDIS_REGISTER_EAX: context->Rax = (context->Rax & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_EBX: context->Rbx = (context->Rbx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_ECX: context->Rcx = (context->Rcx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_EDX: context->Rdx = (context->Rdx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_ESI: context->Rsi = (context->Rsi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_EDI: context->Rdi = (context->Rdi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_EBP: context->Rbp = (context->Rbp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_ESP: context->Rsp = (context->Rsp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R8D: context->R8 = (context->R8 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R9D: context->R9 = (context->R9 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R10D: context->R10 = (context->R10 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R11D: context->R11 = (context->R11 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R12D: context->R12 = (context->R12 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R13D: context->R13 = (context->R13 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R14D: context->R14 = (context->R14 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R15D: context->R15 = (context->R15 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    default: break;
+	    case ZYDIS_REGISTER_RAX: context->Rax = value; break;
+	    case ZYDIS_REGISTER_RBX: context->Rbx = value; break;
+	    case ZYDIS_REGISTER_RCX: context->Rcx = value; break;
+	    case ZYDIS_REGISTER_RDX: context->Rdx = value; break;
+	    case ZYDIS_REGISTER_RSI: context->Rsi = value; break;
+	    case ZYDIS_REGISTER_RDI: context->Rdi = value; break;
+	    case ZYDIS_REGISTER_RBP: context->Rbp = value; break;
+	    case ZYDIS_REGISTER_RSP: context->Rsp = value; break;
+	    case ZYDIS_REGISTER_R8:  context->R8 = value; break;
+	    case ZYDIS_REGISTER_R9:  context->R9 = value; break;
+	    case ZYDIS_REGISTER_R10: context->R10 = value; break;
+	    case ZYDIS_REGISTER_R11: context->R11 = value; break;
+	    case ZYDIS_REGISTER_R12: context->R12 = value; break;
+	    case ZYDIS_REGISTER_R13: context->R13 = value; break;
+	    case ZYDIS_REGISTER_R14: context->R14 = value; break;
+	    case ZYDIS_REGISTER_R15: context->R15 = value; break;
+	    case ZYDIS_REGISTER_EAX: context->Rax = (context->Rax & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_EBX: context->Rbx = (context->Rbx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_ECX: context->Rcx = (context->Rcx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_EDX: context->Rdx = (context->Rdx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_ESI: context->Rsi = (context->Rsi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_EDI: context->Rdi = (context->Rdi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_EBP: context->Rbp = (context->Rbp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_ESP: context->Rsp = (context->Rsp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R8D: context->R8 = (context->R8 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R9D: context->R9 = (context->R9 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R10D: context->R10 = (context->R10 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R11D: context->R11 = (context->R11 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R12D: context->R12 = (context->R12 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R13D: context->R13 = (context->R13 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R14D: context->R14 = (context->R14 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R15D: context->R15 = (context->R15 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    default: break;
     }
 }
 
@@ -565,7 +565,9 @@ LONG WINAPI GameLogic::VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInf
         // 让 __except 块来捕获
         return EXCEPTION_CONTINUE_SEARCH;
     }
-}bool GameLogic::CallDecFuncSafely(DecFunc_t DecFunc, ULONG64 remoteTableAddr, int* position, DWORD size, WORD handler) {
+}
+
+bool GameLogic::CallDecFuncSafely(DecFunc_t DecFunc, ULONG64 remoteTableAddr, int* position, DWORD size, WORD handler) {
     __try {
         g_remotePointerCache.clear();
         DecFunc(MAGIC | remoteTableAddr, position, size, handler);
@@ -576,6 +578,37 @@ LONG WINAPI GameLogic::VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInf
             << GetExceptionCode() << std::dec << std::endl;
         return false;
     }
+}
+
+// 辅助函数：定义什么是异常坐标
+// 我们只检查 a3 == 12 (Vector3) 的情况
+static bool is_decrypted_coord_abnormal(const int* a2, unsigned int a3)
+{
+    // 如果不是在解密 Vector3 (12 字节)，我们不进行检查
+    if (a3 != 12) {
+        return false;
+    }
+
+    // 将 int* 转回 float* 来读取坐标
+    const float* coords = reinterpret_cast<const float*>(a2);
+    const float x = coords[0];
+    const float y = coords[1];
+    const float z = coords[2];
+
+
+    const float threshold = 1.0e7f;
+
+    if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(z) ||
+        std::fabs(x) > threshold ||
+        std::fabs(y) > threshold ||
+        std::fabs(z) > threshold)
+    {
+        // 坐标是无穷大、NaN 或 超出阈值
+        return true; // 判定为异常
+    }
+
+    // 坐标在正常范围内
+    return false;
 }
 
 // 动态解密
@@ -597,65 +630,65 @@ void __fastcall GameLogic::decrypt(ULONG32 Pid, int* a2, unsigned int a3, __int1
 
     switch (decFuncPtr)
     {
-    case 0x142843E80:
-        //std::cout << "[Main] Using decrypt variant 1" << std::endl;
-        targetFuncRVA = 0x1427DEC50 - IMAGE_BASE;  // 对应 sub_1427DEC50
-        encTableAddr = 0x153FBF8B0;
-        effectiveTableAddr = encTableAddr;
-        break;
+	    case 0x142843E80:
+	        //std::cout << "[Main] Using decrypt variant 1" << std::endl;
+	        targetFuncRVA = 0x1427DEC50 - IMAGE_BASE;  // 对应 sub_1427DEC50
+	        encTableAddr = 0x153FBF8B0;
+	        effectiveTableAddr = encTableAddr;
+	        break;
 
-    case 0x142843EA0:
-        //std::cout << "[Main] Using decrypt variant 2" << std::endl;
-        targetFuncRVA = 0x1427ECBC0 - IMAGE_BASE;  // 对应 sub_1427ECBC0
-        encTableAddr = 0x153FBF838;
-        effectiveTableAddr = encTableAddr;
-        break;
+	    case 0x142843EA0:
+	        //std::cout << "[Main] Using decrypt variant 2" << std::endl;
+	        targetFuncRVA = 0x1427ECBC0 - IMAGE_BASE;  // 对应 sub_1427ECBC0
+	        encTableAddr = 0x153FBF838;
+	        effectiveTableAddr = encTableAddr;
+	        break;
 
-    case 0x142843EC0:
-        //std::cout << "[Main] Using decrypt variant 3" << std::endl;
-        targetFuncRVA = 0x1427FAD40 - IMAGE_BASE;  // 对应 sub_1427FAD40
-        encTableAddr = 0x153FBF7C8;
-        effectiveTableAddr = encTableAddr;
-        break;
+	    case 0x142843EC0:
+	        //std::cout << "[Main] Using decrypt variant 3" << std::endl;
+	        targetFuncRVA = 0x1427FAD40 - IMAGE_BASE;  // 对应 sub_1427FAD40
+	        encTableAddr = 0x153FBF7C8;
+	        effectiveTableAddr = encTableAddr;
+	        break;
 
-    case 0x142843EE0:
-        //std::cout << "[Main] Using decrypt variant 4" << std::endl;
-        targetFuncRVA = 0x1428097D0 - IMAGE_BASE;  // 对应 sub_1428097D0
-        encTableAddr = 0x153FBF710;
-        effectiveTableAddr = encTableAddr;
-        break;
+	    case 0x142843EE0:
+	        //std::cout << "[Main] Using decrypt variant 4" << std::endl;
+	        targetFuncRVA = 0x1428097D0 - IMAGE_BASE;  // 对应 sub_1428097D0
+	        encTableAddr = 0x153FBF710;
+	        effectiveTableAddr = encTableAddr;
+	        break;
 
-    case 0x142843F00:
-        //std::cout << "[Main] Using decrypt variant 5" << std::endl;
-        targetFuncRVA = 0x1428177F0 - IMAGE_BASE;  // 对应 sub_1428177F0
-        encTableAddr = 0x153FBF990;
-        effectiveTableAddr = encTableAddr;
-        break;
+	    case 0x142843F00:
+	        //std::cout << "[Main] Using decrypt variant 5" << std::endl;
+	        targetFuncRVA = 0x1428177F0 - IMAGE_BASE;  // 对应 sub_1428177F0
+	        encTableAddr = 0x153FBF990;
+	        effectiveTableAddr = encTableAddr;
+	        break;
 
-    case 0x142843F20:
-        //std::cout << "[Main] Using decrypt variant 6" << std::endl;
-        targetFuncRVA = 0x1428261A0 - IMAGE_BASE;  // 对应 sub_1428261A0
-        encTableAddr = 0x153FBF4F0;
-        effectiveTableAddr = read<ULONG64>(encTableAddr);
-        break;
+	    case 0x142843F20:
+	        //std::cout << "[Main] Using decrypt variant 6" << std::endl;
+	        targetFuncRVA = 0x1428261A0 - IMAGE_BASE;  // 对应 sub_1428261A0
+	        encTableAddr = 0x153FBF4F0;
+	        effectiveTableAddr = read<ULONG64>(encTableAddr);
+	        break;
 
-    case 0x142843F40:
-        //std::cout << "[Main] Using decrypt variant 7" << std::endl;
-        targetFuncRVA = 0x142834A10 - IMAGE_BASE;
-        encTableAddr = 0x153FBF4F8;
-        effectiveTableAddr = read<ULONG64>(encTableAddr);
-        break;
+	    case 0x142843F40:
+	        //std::cout << "[Main] Using decrypt variant 7" << std::endl;
+	        targetFuncRVA = 0x142834A10 - IMAGE_BASE;
+	        encTableAddr = 0x153FBF4F8;
+	        effectiveTableAddr = read<ULONG64>(encTableAddr);
+	        break;
 
-    case 0x142843F60:
-        std::cout << "[Main] Using decrypt variant 8" << std::endl;
-        targetFuncRVA = 0x14099D820 - IMAGE_BASE;  // 对应 sub_14099D820
-        encTableAddr = 0x15435AB98;
-        effectiveTableAddr = encTableAddr;
-        break;
+	    case 0x142843F60:
+	        std::cout << "[Main] Using decrypt variant 8" << std::endl;
+	        targetFuncRVA = 0x14099D820 - IMAGE_BASE;  // 对应 sub_14099D820
+	        encTableAddr = 0x15435AB98;
+	        effectiveTableAddr = encTableAddr;
+	        break;
 
-    default:
-        std::cerr << "[Main] Unknown decrypt function: 0x" << std::hex << decFuncPtr << std::dec << std::endl;
-        return;
+	    default:
+	        std::cerr << "[Main] Unknown decrypt function: 0x" << std::hex << decFuncPtr << std::dec << std::endl;
+	        return;
     }
 
     if (effectiveTableAddr == 0 && (decFuncPtr == 0x142843F20 || decFuncPtr == 0x142843F40))
@@ -796,6 +829,20 @@ void GameLogic::stop() {
     std::cout << "[GameLogic] All threads stopped." << std::endl;
 }
 
+
+// 清空 decrypt 的缓存
+void GameLogic::clear_decrypt_cache() const {
+    std::unique_lock lock(decryptCacheMutex);
+    cachedDecFuncPtr = 0;
+    cachedDecFunc = nullptr;
+    cachedEffectiveTableAddr = 0;
+}
+
+// 清空 decrypt_shift 的缓存
+void GameLogic::clear_shift_cache() const {
+    std::unique_lock lock(shiftCacheMutex);
+    shiftCache.clear();
+}
 
 std::string GameLogic::get_main_world(ULONG64 Uworld)
 {
@@ -1148,6 +1195,33 @@ uint64_t GameLogic::get_map_object(uint64_t PlayerController) {
     return mapObjPtr;
 }
 
+/**
+ * @brief 通过已解密的 RootComponent 指针快速获取 Yaw
+ */
+float GameLogic::get_my_yaw_from_root(ULONGLONG root_component_ptr) const
+{
+    // 检查指针有效性
+    if (root_component_ptr)
+    {
+        // 读取 FTransform
+        FTransform c2w = read<FTransform>(root_component_ptr + Offsets::ComponentToWorld);
+
+        // 获取旋转四元数
+        const auto& q = c2w.Rotation;
+
+        // const float YawY = 2.0f * (q.W * q.Z + q.X * q.Y);
+        const float YawY = 2.0f * (q.w * q.z + q.x * q.y);
+
+        // const float YawX = (1.0f - 2.0f * (q.Y * q.Y + q.Z * q.Z));
+        const float YawX = (1.0f - 2.0f * (q.y * q.y + q.z * q.z));
+
+        // Yaw = atan2f(YawY, YawX) * RAD_TO_DEG;
+        float yawRadians = atan2f(YawY, YawX);
+        return DirectX::XMConvertToDegrees(yawRadians);
+    }
+    return 0.0f;
+}
+
 // 其实地图上已经显示队友及本人朝向了，此函数的作用不是很大，但保留以备不时之需
 float GameLogic::get_my_yaw() const
 {
@@ -1155,30 +1229,10 @@ float GameLogic::get_my_yaw() const
     {
         if (sharedData.my_pawn_ptr)
         {
-            //ULONGLONG root_component_ptr = read<ULONGLONG>(sharedData.my_pawn_ptr + Offsets::RootComponent) >> 4;
             ULONGLONG root_component_ptr = decrypt_shift(sharedData.my_pawn_ptr + Offsets::RootComponent);
-            if (root_component_ptr)
-            {
-                // 读取 FTransform
-                FTransform c2w = read<FTransform>(root_component_ptr + Offsets::ComponentToWorld);
-
-                // 获取旋转四元数
-                const auto& q = c2w.Rotation;
-
-                // const float YawY = 2.0f * (q.W * q.Z + q.X * q.Y); [cite: 1377]
-                const float YawY = 2.0f * (q.w * q.z + q.x * q.y);
-
-                // const float YawX = (1.0f - 2.0f * (q.Y * q.Y + q.Z * q.Z)); [cite: 1377]
-                const float YawX = (1.0f - 2.0f * (q.y * q.y + q.z * q.z));
-
-                // Yaw = atan2f(YawY, YawX) * RAD_TO_DEG; [cite: 1377-1378]
-                float yawRadians = atan2f(YawY, YawX);
-                return DirectX::XMConvertToDegrees(yawRadians);
-            }
+            return get_my_yaw_from_root(root_component_ptr);
         }
     }
-
-    // 如果上述方法都失败，返回0
     return 0.0f;
 }
 
@@ -1588,9 +1642,30 @@ void GameLogic::viewAndSelfUpdateLoop() {
 
         if (cached_player_controller_ptr && cached_view_matrix_final_ptr) {
             my_pawn = read<ULONGLONG>(cached_player_controller_ptr + Offsets::LocalPlayerPtr_PawnOffset);
+
             if (my_pawn && is_in_match_check(my_pawn)) {
                 inMatch = true;
-                myLoc = get_actor_location(my_pawn);
+
+                if (cached_my_root_component_ptr == 0) {
+                    // 仅在缓存为空时调用一次解密
+                    cached_my_root_component_ptr = decrypt_shift(my_pawn + Offsets::RootComponent);
+                    if (cached_my_root_component_ptr == 0) {
+                        std::cerr << "[ViewLoop] Failed to get my root component, retrying next frame..." << std::endl;
+                    }
+                }
+
+                if (cached_my_root_component_ptr) {
+                    // read_enc_location 接受的就是 root_comp_ptr
+                    myLoc = read_enc_location(cached_my_root_component_ptr);
+                    // 使用新的辅助函数
+                    myYaw = get_my_yaw_from_root(cached_my_root_component_ptr);
+                }
+                else {
+                    // 如果 root_component_ptr 获取失败，则回退
+                    myLoc = { 0,0,0 };
+                    myYaw = 0.f;
+                }
+
                 read_bytes(cached_view_matrix_final_ptr, &vm, sizeof(vm));
                 ULONGLONG my_ps = read<ULONGLONG>(my_pawn + Offsets::PlayerState);
                 if (my_ps) myTeam = read<int>(my_ps + Offsets::TeamID + teamIdDelta);
@@ -1626,7 +1701,7 @@ void GameLogic::viewAndSelfUpdateLoop() {
                     mapInfo = read<Mapinfo>(mapObjPtr + Offsets::MapinfoOffset);
                 }
 
-                myYaw = get_my_yaw(); // 获取自己的 Yaw
+                // myYaw 已在上面通过 get_my_yaw_from_root 获取
 
                 // 读取 MapId
                 ULONGLONG uworld_ptr = read<ULONGLONG>(baseAddress + Offsets::Uworld);
@@ -1636,11 +1711,15 @@ void GameLogic::viewAndSelfUpdateLoop() {
                         mapId = read<int>(ADFMGameState + Offsets::MapConfig + 0x10);
                     }
                 }
-
             }
             else {
+                if (cached_my_root_component_ptr != 0) {
+                    // 仅当我们确实在对局中时才打印
+                    std::cout << "[ViewLoop] Left match. Clearing root component cache." << std::endl;
+                }
                 cached_player_controller_ptr = 0;
                 cached_view_matrix_final_ptr = 0;
+                cached_my_root_component_ptr = 0; // 清空自己的root
                 inMatch = false;
                 mapObjPtr = 0; // 退出对局时重置
                 miniMapObjPtr = 0;
@@ -1650,7 +1729,7 @@ void GameLogic::viewAndSelfUpdateLoop() {
         if (!inMatch) {
             ULONGLONG lp1 = read<ULONGLONG>(baseAddress + Offsets::Uworld);
             if (lp1) {
-                ULONGLONG lp2 = decrypt_shift(lp1 + Offsets::OwningGameInstance);
+                ULONGLONG lp2 = decrypt_shift(lp1 + Offsets::OwningGameInstance); // 仍然需要调用
                 if (lp2) {
                     ULONGLONG lp3 = read<ULONGLONG>(lp2 + Offsets::LocalPlayers);
                     if (lp3) {
@@ -1658,8 +1737,24 @@ void GameLogic::viewAndSelfUpdateLoop() {
                         if (lp4) {
                             ULONGLONG player_controller = read<ULONGLONG>(lp4 + Offsets::PlayerController);
                             my_pawn = read<ULONGLONG>(player_controller + Offsets::LocalPlayerPtr_PawnOffset);
+
                             if (my_pawn && is_in_match_check(my_pawn)) {
-                                read_bytes(cached_view_matrix_final_ptr, &vm, sizeof(vm));
+
+                                // 刚找到Pawn，立即缓存所有指针
+                                inMatch = true;
+                                cached_player_controller_ptr = player_controller;
+
+                                // 查找 ViewMatrix
+                                ULONGLONG vmb = read<ULONGLONG>(baseAddress + Offsets::ViewMatrix_Base);
+                                if (vmb) {
+                                    ULONGLONG mp = read<ULONGLONG>(vmb + Offsets::ViewMatrix_Offset1) + Offsets::ViewMatrix_Offset2;
+                                    if (mp) {
+                                        cached_view_matrix_final_ptr = mp;
+                                        read_bytes(cached_view_matrix_final_ptr, &vm, sizeof(vm));
+                                    }
+                                }
+
+                                // 计算 FOV
                                 float p_22 = vm._22;
                                 if (p_22 > 0.001f && g_game_height > 0) {
                                     float vfov_rad = 2.0f * std::atan(1.0f / p_22);
@@ -1674,17 +1769,18 @@ void GameLogic::viewAndSelfUpdateLoop() {
                                     current_fov = 90.0f;
                                 }
 
-                                inMatch = true;
-                                cached_player_controller_ptr = player_controller;
-                                ULONGLONG vmb = read<ULONGLONG>(baseAddress + Offsets::ViewMatrix_Base);
-                                if (vmb) {
-                                    ULONGLONG mp = read<ULONGLONG>(vmb + Offsets::ViewMatrix_Offset1) + Offsets::ViewMatrix_Offset2;
-                                    if (mp) {
-                                        cached_view_matrix_final_ptr = mp;
-                                        read_bytes(cached_view_matrix_final_ptr, &vm, sizeof(vm));
-                                    }
+                                cached_my_root_component_ptr = decrypt_shift(my_pawn + Offsets::RootComponent);
+                                if (cached_my_root_component_ptr) {
+                                    myLoc = read_enc_location(cached_my_root_component_ptr);
+                                    myYaw = get_my_yaw_from_root(cached_my_root_component_ptr);
                                 }
-                                myLoc = get_actor_location(my_pawn);
+                                else {
+                                    std::cerr << "[ViewLoop] Failed to get my root component on match entry." << std::endl;
+                                    myLoc = { 0,0,0 };
+                                    myYaw = 0.f;
+                                }
+
+                                // 获取 TeamID
                                 ULONGLONG my_ps = read<ULONGLONG>(my_pawn + Offsets::PlayerState);
                                 if (my_ps) {
                                     int t0 = read<int>(my_ps + Offsets::TeamID);
@@ -1694,12 +1790,14 @@ void GameLogic::viewAndSelfUpdateLoop() {
                                     myTeam = read<int>(my_ps + Offsets::TeamID + teamIdDelta);
                                 }
 
+                                // 获取地图对象
                                 get_map_object(cached_player_controller_ptr);
                                 if (mapObjPtr != 0) {
                                     isMapOpen = read<char>(mapObjPtr + Offsets::preShouldDrawOffset) != 0;
                                     mapInfo = read<Mapinfo>(mapObjPtr + Offsets::MapinfoOffset);
                                 }
-                                myYaw = get_my_yaw();
+
+                                // 获取 MapID
                                 ULONGLONG ADFMGameState = read<ULONGLONG>(lp1 + Offsets::GameState);
                                 if (ADFMGameState) {
                                     mapId = read<int>(ADFMGameState + Offsets::MapConfig + 0x10);

@@ -56,6 +56,7 @@ public:
 	// 公共接口：从 main 调用
 	void start();
 	void stop();
+	void clear_decrypt_cache() const;
 
 private:
 	// 内部函数
@@ -111,6 +112,7 @@ private:
 	std::string get_held_weapon(uint64_t actor_ptr) const;
 	std::optional<bool> try_read_open_state_once(uint64_t actor, StaticClass cls) const;
 	bool is_in_match_check(uint64_t my_pawn);
+	void clear_shift_cache() const;
 	std::string get_main_world(ULONG64 Uworld);
 
 	// 静态辅助函数
@@ -134,6 +136,7 @@ private:
 	);
 
 	uint64_t get_map_object(uint64_t PlayerController);
+	float get_my_yaw_from_root(ULONGLONG root_component_ptr) const;
 	float get_my_yaw() const; // 用于获取自身Yaw
 
 	// 引用成员
@@ -204,4 +207,17 @@ private:
 	static uintptr_t GetRegisterValue(PCONTEXT context, ZydisRegister reg);
 	static void SetRegisterValue(PCONTEXT context, ZydisRegister reg, uintptr_t value);
 	static bool FixBaseDisplacementMemoryAccess(PCONTEXT context, uintptr_t value);
+
+	// 用于 viewAndSelfUpdateLoop: 缓存自己的 RootComponent 指针
+	ULONGLONG cached_my_root_component_ptr = 0;
+
+	// 用于 decrypt: 缓存当前有效的解密函数
+	mutable std::shared_mutex decryptCacheMutex; // 互斥锁，保证线程安全
+	mutable uintptr_t cachedDecFuncPtr = 0;
+	mutable DecFunc_t cachedDecFunc = nullptr;
+	mutable ULONG64 cachedEffectiveTableAddr = 0;
+
+	// 用于 decrypt_shift: 缓存加密指针的解密结果 (Key: Address, Value: DecryptedPtr)
+	mutable std::shared_mutex shiftCacheMutex; // 互斥锁，保证线程安全
+	mutable std::unordered_map<ULONG64, ULONG64> shiftCache;
 };
