@@ -92,77 +92,77 @@ bool GameLogic::initialize() {
 
 uintptr_t GameLogic::GetRegisterValue(PCONTEXT context, ZydisRegister reg) {
     switch (reg) {
-	    case ZYDIS_REGISTER_RAX: return context->Rax;
-	    case ZYDIS_REGISTER_RBX: return context->Rbx;
-	    case ZYDIS_REGISTER_RCX: return context->Rcx;
-	    case ZYDIS_REGISTER_RDX: return context->Rdx;
-	    case ZYDIS_REGISTER_RSI: return context->Rsi;
-	    case ZYDIS_REGISTER_RDI: return context->Rdi;
-	    case ZYDIS_REGISTER_RBP: return context->Rbp;
-	    case ZYDIS_REGISTER_RSP: return context->Rsp;
-	    case ZYDIS_REGISTER_R8:  return context->R8;
-	    case ZYDIS_REGISTER_R9:  return context->R9;
-	    case ZYDIS_REGISTER_R10: return context->R10;
-	    case ZYDIS_REGISTER_R11: return context->R11;
-	    case ZYDIS_REGISTER_R12: return context->R12;
-	    case ZYDIS_REGISTER_R13: return context->R13;
-	    case ZYDIS_REGISTER_R14: return context->R14;
-	    case ZYDIS_REGISTER_R15: return context->R15;
-	    case ZYDIS_REGISTER_EAX: return context->Rax & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_EBX: return context->Rbx & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_ECX: return context->Rcx & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_EDX: return context->Rdx & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_ESI: return context->Rsi & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_EDI: return context->Rdi & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_EBP: return context->Rbp & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_ESP: return context->Rsp & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_R8D: return context->R8 & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_R9D: return context->R9 & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_R10D: return context->R10 & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_R11D: return context->R11 & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_R12D: return context->R12 & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_R13D: return context->R13 & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_R14D: return context->R14 & 0xFFFFFFFF;
-	    case ZYDIS_REGISTER_R15D: return context->R15 & 0xFFFFFFFF;
-	    default: return 0;
+    case ZYDIS_REGISTER_RAX: return context->Rax;
+    case ZYDIS_REGISTER_RBX: return context->Rbx;
+    case ZYDIS_REGISTER_RCX: return context->Rcx;
+    case ZYDIS_REGISTER_RDX: return context->Rdx;
+    case ZYDIS_REGISTER_RSI: return context->Rsi;
+    case ZYDIS_REGISTER_RDI: return context->Rdi;
+    case ZYDIS_REGISTER_RBP: return context->Rbp;
+    case ZYDIS_REGISTER_RSP: return context->Rsp;
+    case ZYDIS_REGISTER_R8:  return context->R8;
+    case ZYDIS_REGISTER_R9:  return context->R9;
+    case ZYDIS_REGISTER_R10: return context->R10;
+    case ZYDIS_REGISTER_R11: return context->R11;
+    case ZYDIS_REGISTER_R12: return context->R12;
+    case ZYDIS_REGISTER_R13: return context->R13;
+    case ZYDIS_REGISTER_R14: return context->R14;
+    case ZYDIS_REGISTER_R15: return context->R15;
+    case ZYDIS_REGISTER_EAX: return context->Rax & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_EBX: return context->Rbx & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_ECX: return context->Rcx & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_EDX: return context->Rdx & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_ESI: return context->Rsi & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_EDI: return context->Rdi & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_EBP: return context->Rbp & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_ESP: return context->Rsp & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_R8D: return context->R8 & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_R9D: return context->R9 & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_R10D: return context->R10 & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_R11D: return context->R11 & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_R12D: return context->R12 & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_R13D: return context->R13 & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_R14D: return context->R14 & 0xFFFFFFFF;
+    case ZYDIS_REGISTER_R15D: return context->R15 & 0xFFFFFFFF;
+    default: return 0;
     }
 }
 
 void GameLogic::SetRegisterValue(PCONTEXT context, ZydisRegister reg, uintptr_t value) {
     switch (reg) {
-	    case ZYDIS_REGISTER_RAX: context->Rax = value; break;
-	    case ZYDIS_REGISTER_RBX: context->Rbx = value; break;
-	    case ZYDIS_REGISTER_RCX: context->Rcx = value; break;
-	    case ZYDIS_REGISTER_RDX: context->Rdx = value; break;
-	    case ZYDIS_REGISTER_RSI: context->Rsi = value; break;
-	    case ZYDIS_REGISTER_RDI: context->Rdi = value; break;
-	    case ZYDIS_REGISTER_RBP: context->Rbp = value; break;
-	    case ZYDIS_REGISTER_RSP: context->Rsp = value; break;
-	    case ZYDIS_REGISTER_R8:  context->R8 = value; break;
-	    case ZYDIS_REGISTER_R9:  context->R9 = value; break;
-	    case ZYDIS_REGISTER_R10: context->R10 = value; break;
-	    case ZYDIS_REGISTER_R11: context->R11 = value; break;
-	    case ZYDIS_REGISTER_R12: context->R12 = value; break;
-	    case ZYDIS_REGISTER_R13: context->R13 = value; break;
-	    case ZYDIS_REGISTER_R14: context->R14 = value; break;
-	    case ZYDIS_REGISTER_R15: context->R15 = value; break;
-	    case ZYDIS_REGISTER_EAX: context->Rax = (context->Rax & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_EBX: context->Rbx = (context->Rbx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_ECX: context->Rcx = (context->Rcx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_EDX: context->Rdx = (context->Rdx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_ESI: context->Rsi = (context->Rsi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_EDI: context->Rdi = (context->Rdi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_EBP: context->Rbp = (context->Rbp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_ESP: context->Rsp = (context->Rsp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_R8D: context->R8 = (context->R8 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_R9D: context->R9 = (context->R9 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_R10D: context->R10 = (context->R10 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_R11D: context->R11 = (context->R11 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_R12D: context->R12 = (context->R12 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_R13D: context->R13 = (context->R13 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_R14D: context->R14 = (context->R14 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    case ZYDIS_REGISTER_R15D: context->R15 = (context->R15 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-	    default: break;
+    case ZYDIS_REGISTER_RAX: context->Rax = value; break;
+    case ZYDIS_REGISTER_RBX: context->Rbx = value; break;
+    case ZYDIS_REGISTER_RCX: context->Rcx = value; break;
+    case ZYDIS_REGISTER_RDX: context->Rdx = value; break;
+    case ZYDIS_REGISTER_RSI: context->Rsi = value; break;
+    case ZYDIS_REGISTER_RDI: context->Rdi = value; break;
+    case ZYDIS_REGISTER_RBP: context->Rbp = value; break;
+    case ZYDIS_REGISTER_RSP: context->Rsp = value; break;
+    case ZYDIS_REGISTER_R8:  context->R8 = value; break;
+    case ZYDIS_REGISTER_R9:  context->R9 = value; break;
+    case ZYDIS_REGISTER_R10: context->R10 = value; break;
+    case ZYDIS_REGISTER_R11: context->R11 = value; break;
+    case ZYDIS_REGISTER_R12: context->R12 = value; break;
+    case ZYDIS_REGISTER_R13: context->R13 = value; break;
+    case ZYDIS_REGISTER_R14: context->R14 = value; break;
+    case ZYDIS_REGISTER_R15: context->R15 = value; break;
+    case ZYDIS_REGISTER_EAX: context->Rax = (context->Rax & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_EBX: context->Rbx = (context->Rbx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_ECX: context->Rcx = (context->Rcx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_EDX: context->Rdx = (context->Rdx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_ESI: context->Rsi = (context->Rsi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_EDI: context->Rdi = (context->Rdi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_EBP: context->Rbp = (context->Rbp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_ESP: context->Rsp = (context->Rsp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_R8D: context->R8 = (context->R8 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_R9D: context->R9 = (context->R9 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_R10D: context->R10 = (context->R10 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_R11D: context->R11 = (context->R11 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_R12D: context->R12 = (context->R12 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_R13D: context->R13 = (context->R13 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_R14D: context->R14 = (context->R14 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    case ZYDIS_REGISTER_R15D: context->R15 = (context->R15 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+    default: break;
     }
 }
 
@@ -630,65 +630,65 @@ void __fastcall GameLogic::decrypt(ULONG32 Pid, int* a2, unsigned int a3, __int1
 
     switch (decFuncPtr)
     {
-	    case 0x142843E80:
-	        //std::cout << "[Main] Using decrypt variant 1" << std::endl;
-	        targetFuncRVA = 0x1427DEC50 - IMAGE_BASE;  // 对应 sub_1427DEC50
-	        encTableAddr = 0x153FBF8B0;
-	        effectiveTableAddr = encTableAddr;
-	        break;
+    case 0x142843E80:
+        //std::cout << "[Main] Using decrypt variant 1" << std::endl;
+        targetFuncRVA = 0x1427DEC50 - IMAGE_BASE;  // 对应 sub_1427DEC50
+        encTableAddr = 0x153FBF8B0;
+        effectiveTableAddr = encTableAddr;
+        break;
 
-	    case 0x142843EA0:
-	        //std::cout << "[Main] Using decrypt variant 2" << std::endl;
-	        targetFuncRVA = 0x1427ECBC0 - IMAGE_BASE;  // 对应 sub_1427ECBC0
-	        encTableAddr = 0x153FBF838;
-	        effectiveTableAddr = encTableAddr;
-	        break;
+    case 0x142843EA0:
+        //std::cout << "[Main] Using decrypt variant 2" << std::endl;
+        targetFuncRVA = 0x1427ECBC0 - IMAGE_BASE;  // 对应 sub_1427ECBC0
+        encTableAddr = 0x153FBF838;
+        effectiveTableAddr = encTableAddr;
+        break;
 
-	    case 0x142843EC0:
-	        //std::cout << "[Main] Using decrypt variant 3" << std::endl;
-	        targetFuncRVA = 0x1427FAD40 - IMAGE_BASE;  // 对应 sub_1427FAD40
-	        encTableAddr = 0x153FBF7C8;
-	        effectiveTableAddr = encTableAddr;
-	        break;
+    case 0x142843EC0:
+        //std::cout << "[Main] Using decrypt variant 3" << std::endl;
+        targetFuncRVA = 0x1427FAD40 - IMAGE_BASE;  // 对应 sub_1427FAD40
+        encTableAddr = 0x153FBF7C8;
+        effectiveTableAddr = encTableAddr;
+        break;
 
-	    case 0x142843EE0:
-	        //std::cout << "[Main] Using decrypt variant 4" << std::endl;
-	        targetFuncRVA = 0x1428097D0 - IMAGE_BASE;  // 对应 sub_1428097D0
-	        encTableAddr = 0x153FBF710;
-	        effectiveTableAddr = encTableAddr;
-	        break;
+    case 0x142843EE0:
+        //std::cout << "[Main] Using decrypt variant 4" << std::endl;
+        targetFuncRVA = 0x1428097D0 - IMAGE_BASE;  // 对应 sub_1428097D0
+        encTableAddr = 0x153FBF710;
+        effectiveTableAddr = encTableAddr;
+        break;
 
-	    case 0x142843F00:
-	        //std::cout << "[Main] Using decrypt variant 5" << std::endl;
-	        targetFuncRVA = 0x1428177F0 - IMAGE_BASE;  // 对应 sub_1428177F0
-	        encTableAddr = 0x153FBF990;
-	        effectiveTableAddr = encTableAddr;
-	        break;
+    case 0x142843F00:
+        //std::cout << "[Main] Using decrypt variant 5" << std::endl;
+        targetFuncRVA = 0x1428177F0 - IMAGE_BASE;  // 对应 sub_1428177F0
+        encTableAddr = 0x153FBF990;
+        effectiveTableAddr = encTableAddr;
+        break;
 
-	    case 0x142843F20:
-	        //std::cout << "[Main] Using decrypt variant 6" << std::endl;
-	        targetFuncRVA = 0x1428261A0 - IMAGE_BASE;  // 对应 sub_1428261A0
-	        encTableAddr = 0x153FBF4F0;
-	        effectiveTableAddr = read<ULONG64>(encTableAddr);
-	        break;
+    case 0x142843F20:
+        //std::cout << "[Main] Using decrypt variant 6" << std::endl;
+        targetFuncRVA = 0x1428261A0 - IMAGE_BASE;  // 对应 sub_1428261A0
+        encTableAddr = 0x153FBF4F0;
+        effectiveTableAddr = read<ULONG64>(encTableAddr);
+        break;
 
-	    case 0x142843F40:
-	        //std::cout << "[Main] Using decrypt variant 7" << std::endl;
-	        targetFuncRVA = 0x142834A10 - IMAGE_BASE;
-	        encTableAddr = 0x153FBF4F8;
-	        effectiveTableAddr = read<ULONG64>(encTableAddr);
-	        break;
+    case 0x142843F40:
+        //std::cout << "[Main] Using decrypt variant 7" << std::endl;
+        targetFuncRVA = 0x142834A10 - IMAGE_BASE;
+        encTableAddr = 0x153FBF4F8;
+        effectiveTableAddr = read<ULONG64>(encTableAddr);
+        break;
 
-	    case 0x142843F60:
-	        std::cout << "[Main] Using decrypt variant 8" << std::endl;
-	        targetFuncRVA = 0x14099D820 - IMAGE_BASE;  // 对应 sub_14099D820
-	        encTableAddr = 0x15435AB98;
-	        effectiveTableAddr = encTableAddr;
-	        break;
+    case 0x142843F60:
+        std::cout << "[Main] Using decrypt variant 8" << std::endl;
+        targetFuncRVA = 0x14099D820 - IMAGE_BASE;  // 对应 sub_14099D820
+        encTableAddr = 0x15435AB98;
+        effectiveTableAddr = encTableAddr;
+        break;
 
-	    default:
-	        std::cerr << "[Main] Unknown decrypt function: 0x" << std::hex << decFuncPtr << std::dec << std::endl;
-	        return;
+    default:
+        std::cerr << "[Main] Unknown decrypt function: 0x" << std::hex << decFuncPtr << std::dec << std::endl;
+        return;
     }
 
     if (effectiveTableAddr == 0 && (decFuncPtr == 0x142843F20 || decFuncPtr == 0x142843F40))
@@ -1980,8 +1980,10 @@ void GameLogic::aimbotLoop() {
     float remain_dx = 0.0f; // 上一帧剩余的水平移动量
     float remain_dy = 0.0f; // 上一帧剩余的垂直移动量
     long long loop_counter = 0; // 循环计数器，用于日志节流
+    bool is_on_target = false; // 用于自动扳机
 
     constexpr float BASE_RECOIL_FOV = 90.0f;
+    const float AUTO_TRIGGER_RADIUS_SQ = 35.0f * 35.0f; // 自动扳机的像素半径
 
     // 模拟压枪所需的状态
     auto firing_start_time = std::chrono::steady_clock::now();
@@ -1998,18 +2000,17 @@ void GameLogic::aimbotLoop() {
     // 瞄准状态，用于在帧之间保持优先级锁定
     uint64_t locked_target_ptr = 0;
     BoneID locked_target_bone = BoneID::root;
-    int locked_target_priority = 999; // 999 = 未锁定 (越小优先级越高)
+    int locked_target_priority = 999;
 
     std::cout << "[Aimbot] Server-side loop started (Write Mode with Recoil)." << std::endl;
 
     // 初始化缓存的压枪设置
     {
         std::shared_lock lock(g_cfg.recoil_settings_mutex);
-        if (g_cfg.weapon_recoil_settings.size() == static_cast<size_t>(WeaponType::MaxTypes)) { // 确保已初始化且大小正确
+        if (g_cfg.weapon_recoil_settings.size() == static_cast<size_t>(WeaponType::MaxTypes)) {
             current_recoil_setting = g_cfg.weapon_recoil_settings[static_cast<int>(WeaponType::Unknown)];
         }
         else {
-            // 如果 g_cfg 未初始化或大小错误，设置一个安全的默认值并报错
             current_recoil_setting = { 0.f, 0.f, 0.f, 0.f, 0.f, 1.f };
             std::cerr << "[Aimbot] Error: g_cfg.weapon_recoil_settings not properly initialized or wrong size!" << std::endl;
         }
@@ -2019,12 +2020,13 @@ void GameLogic::aimbotLoop() {
         loop_counter++;
         std::this_thread::sleep_for(std::chrono::milliseconds(8));
 
+        is_on_target = false; // 默认每帧重置为 false
+
         Vector3 my_loc;
         int my_team = -1;
         bool is_in_match = false;
         uint64_t my_pawn = 0;
-
-        float current_fov = BASE_RECOIL_FOV; // 默认值
+        float current_fov = BASE_RECOIL_FOV;
 
         {
             std::shared_lock lock(sharedData.mutex);
@@ -2039,223 +2041,219 @@ void GameLogic::aimbotLoop() {
         bool recoil_on = g_cfg.simulated_recoil_enabled.load(std::memory_order_relaxed);
 
         if (!is_in_match || my_pawn == 0 || !valid_location(my_loc)) {
-            // 不在游戏中或数据无效，重置并跳过
             if (remain_dx != 0.0f || remain_dy != 0.0f) {
-                // 确保写入 is_recoiling = false
-                atomic_write_text(lua_config_path, "step_dx = 0\nstep_dy = 0\nis_recoiling = false\n");
+                // 确保写入所有标志
+                atomic_write_text(lua_config_path, "step_dx = 0\nstep_dy = 0\nis_recoiling = false\nis_on_target = false\nis_single_fire = false\n");
             }
             remain_dx = 0.0f; remain_dy = 0.0f;
             locked_target_ptr = 0;
             locked_target_bone = BoneID::root;
             locked_target_priority = 999;
-            firing_start_time = std::chrono::steady_clock::now(); // 重置开火计时
-            current_weapon_type = WeaponType::Unknown; // 重置武器类型缓存
+            firing_start_time = std::chrono::steady_clock::now();
+            current_weapon_type = WeaponType::Unknown;
             continue;
         }
 
         float recoil_x = 0.0f;
         float recoil_y = 0.0f;
-        bool is_firing_state = read_is_firing_flag(); // 读取开火状态
+        bool is_firing_state = read_is_firing_flag();
 
-        if (recoil_on) { // 仅当压枪开关打开时才计算
+        // --- 武器检测 和 连点/压枪 模式设置 ---
+        bool is_single_fire_mode = false;
+        {
             long long current_weapon_id = 0;
             WeaponType new_weapon_type = WeaponType::Unknown;
 
-            // 获取当前武器ID
-            if (my_pawn) { // 确保 my_pawn 有效
+            if (my_pawn) {
                 uint64_t weapon_ptr = read<uint64_t>(my_pawn + Offsets::CacheCurWeapon);
                 if (weapon_ptr) {
                     current_weapon_id = read<long long>(weapon_ptr + Offsets::WeaponID);
                 }
             }
-            new_weapon_type = get_weapon_type(current_weapon_id); // 根据ID获取武器类型
+            new_weapon_type = get_weapon_type(current_weapon_id);
 
-            // 检查武器类型是否变化，只更新 current_weapon_type 状态
             if (new_weapon_type != current_weapon_type) {
                 current_weapon_type = new_weapon_type;
             }
 
+            // 根据当前武器类型设置连点标志
+            switch (current_weapon_type) {
+            case WeaponType::Shotgun:
+            case WeaponType::DMR:
+            case WeaponType::Sniper:
+            case WeaponType::Pistol:
+                is_single_fire_mode = true;
+                break;
+                // 默认 (Rifle, SMG, LMG, Unknown) 都是全自动压枪
+            default:
+                is_single_fire_mode = false;
+                break;
+            }
+        }
+        // --- 武器检测结束 ---
+
+
+        if (recoil_on && !is_single_fire_mode) { // 只有全自动武器才计算压枪
             {
-                std::shared_lock lock(g_cfg.recoil_settings_mutex); // 读锁获取设置
+                std::shared_lock lock(g_cfg.recoil_settings_mutex);
                 int index = static_cast<int>(current_weapon_type);
                 if (index >= 0 && index < g_cfg.weapon_recoil_settings.size()) {
-                    current_recoil_setting = g_cfg.weapon_recoil_settings[index]; // 更新本地副本
+                    current_recoil_setting = g_cfg.weapon_recoil_settings[index];
                 }
                 else {
-                    current_recoil_setting = g_cfg.weapon_recoil_settings[static_cast<int>(WeaponType::Unknown)]; // 出错时用默认
+                    current_recoil_setting = g_cfg.weapon_recoil_settings[static_cast<int>(WeaponType::Unknown)];
                 }
             }
 
-            if (is_firing_state) { // 只有在开火状态下才计算压枪值
+            if (is_firing_state) {
                 auto now = std::chrono::steady_clock::now();
                 auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - firing_start_time).count();
                 float delay_ms = current_recoil_setting.recoil_delay_ms;
-                float multiplier = current_recoil_setting.recoil_multiplier; // 获取当前武器的倍率
+                float multiplier = current_recoil_setting.recoil_multiplier;
 
-                // 应用压枪值，考虑延迟和倍率
-                if (delay_ms > 0 && duration_ms >= delay_ms) { // 第二阶段
+                if (delay_ms > 0 && duration_ms >= delay_ms) {
                     recoil_x = current_recoil_setting.recoil_x_2 * multiplier;
                     recoil_y = current_recoil_setting.recoil_y_2 * multiplier;
                 }
-                else { // 第一阶段
+                else {
                     recoil_x = current_recoil_setting.recoil_x * multiplier;
                     recoil_y = current_recoil_setting.recoil_y * multiplier;
                 }
                 if (current_fov > 0.0f && std::abs(current_fov - BASE_RECOIL_FOV) > 0.01f) {
                     float fov_scale = BASE_RECOIL_FOV / current_fov;
-
                     recoil_x *= fov_scale;
                     recoil_y *= fov_scale;
                 }
             }
             else {
-                firing_start_time = std::chrono::steady_clock::now(); // 不开火时重置计时器
+                firing_start_time = std::chrono::steady_clock::now();
             }
         }
-        else { // 如果压枪总开关关闭
-            firing_start_time = std::chrono::steady_clock::now(); // 也要重置计时器
+        else {
+            firing_start_time = std::chrono::steady_clock::now();
         }
-        // 压枪计算结束，recoil_x 和 recoil_y 包含了当前帧应应用的压枪偏，可能为0
 
         // 自瞄计算
-        float aim_move_x = 0.0f; // 当前帧自瞄计算出的水平移动量
-        float aim_move_y = 0.0f; // 当前帧自瞄计算出的垂直移动量
-        bool target_found_this_frame = false; // 重置每帧的目标查找标志
+        float aim_move_x = 0.0f;
+        float aim_move_y = 0.0f;
+        bool target_found_this_frame = false;
 
-        if (aimbot_on) { // 只有自瞄开关打开时才执行目标选择和计算
-            // 加载自瞄配置
+        if (aimbot_on) {
             float screen_center_x = static_cast<float>(g_game_width) / 2.0f;
             float screen_center_y = static_cast<float>(g_game_height) / 2.0f;
             float fov_pixels = g_cfg.aimbot_fov.load(std::memory_order_relaxed);
-            float fov_pixels_sq = fov_pixels * fov_pixels; // 使用平方距离比较
+            float fov_pixels_sq = fov_pixels * fov_pixels;
             float base_smooth = std::max(1.0f, g_cfg.aimbot_smooth.load(std::memory_order_relaxed));
             float max_dist = g_cfg.aimbot_max_distance.load(std::memory_order_relaxed);
             bool visible_only_cfg = g_cfg.aimbot_visible_only.load(std::memory_order_relaxed);
             bool ignore_ai = g_cfg.aimbot_ignore_ai.load(std::memory_order_relaxed);
             bool use_priority_lock_mode = !g_cfg.aimbot_aim_nearest_on_visible.load(std::memory_order_relaxed);
-            bool map_is_loaded = mapLoaded.load(std::memory_order_relaxed); // 获取地图加载状态
+            bool map_is_loaded = mapLoaded.load(std::memory_order_relaxed);
 
-            // 确定要检查的骨骼
             std::vector<AimbotBoneSetting> bones_to_check_cfg;
             {
-                std::shared_lock lock(g_cfg.aimbot_bones_mutex); // 读锁获取骨骼配置
+                std::shared_lock lock(g_cfg.aimbot_bones_mutex);
                 bones_to_check_cfg = g_cfg.aimbot_target_bones;
             }
-            // 如果用户未配置骨骼 或 处于就近吸附模式，则使用默认的身体骨骼列表
             if (bones_to_check_cfg.empty() || !use_priority_lock_mode) {
                 bones_to_check_cfg.clear();
-                for (const auto& bone_id : g_valid_body_bones) { // 使用预定义的有效身体骨骼
-                    bones_to_check_cfg.push_back({ bone_id, true }); // 默认全部启用
+                for (const auto& bone_id : g_valid_body_bones) {
+                    bones_to_check_cfg.push_back({ bone_id, true });
                 }
             }
 
-            // 目标选择
-            uint64_t frame_best_actor_ptr = 0; // 本帧找到的最佳目标 Actor 指针
-            BoneID frame_best_bone_id = BoneID::root; // 本帧找到的最佳目标骨骼 ID
-            int frame_best_priority = 999;          // 本帧找到的最佳目标的优先级
-            float frame_best_dist_sq = fov_pixels_sq; // 初始化为FOV边界的平方距离
-            DirectX::XMFLOAT2 frame_best_screen_pos = { 0.0f, 0.0f }; // 最佳目标的屏幕坐标
-            // target_found_this_frame 在上面已重置为 false
+            uint64_t frame_best_actor_ptr = 0;
+            BoneID frame_best_bone_id = BoneID::root;
+            int frame_best_priority = 999;
+            float frame_best_dist_sq = fov_pixels_sq;
+            DirectX::XMFLOAT2 frame_best_screen_pos = { 0.0f, 0.0f };
 
-            // 获取当前玩家列表的副本
             std::vector<CachedPlayer> current_players;
             {
                 std::shared_lock lock(playerCacheMutex);
                 current_players.reserve(playerCache.size());
                 for (const auto& pair : playerCache) {
-                    current_players.push_back(pair.second); // 复制玩家数据
+                    current_players.push_back(pair.second);
                 }
             }
 
-            // 优先处理已锁定的目标
             if (use_priority_lock_mode && locked_target_ptr != 0) {
                 bool locked_target_still_valid = false;
-                for (const auto& p : current_players) { // 在当前玩家列表中查找锁定的目标
+                for (const auto& p : current_players) {
                     if (p.actor_ptr != locked_target_ptr) continue;
 
-                    // 检查锁定的目标是否仍然有效 (存在、非队友、未死亡、在距离内)
                     if (!p.client_knows_about_it || (p.team_id == my_team && p.team_id != -1) || p.health <= 0.1f) {
-                        break; // 目标无效
+                        break;
                     }
-                    float distance_m = p.location.Distance(my_loc) / 100.0f; // 计算距离 (米)
+                    float distance_m = p.location.Distance(my_loc) / 100.0f;
                     if (distance_m > max_dist) {
-                        break; // 目标太远
+                        break;
                     }
 
-                    locked_target_still_valid = true; // 基础检查通过
+                    locked_target_still_valid = true;
 
-                    // 遍历所有启用的骨骼，寻找该锁定目标身上当前最佳的瞄准点
                     for (const auto& bone_setting : bones_to_check_cfg) {
-                        if (!bone_setting.enabled) continue; // 跳过未启用的骨骼
+                        if (!bone_setting.enabled) continue;
 
                         int bone_index = static_cast<int>(bone_setting.bone_id);
-                        // 边界检查和骨骼坐标有效性检查
                         if (bone_index < 0 || bone_index >= NUM_BONES || !is_valid_bone_position(p.skeleton[bone_index])) continue;
 
                         Vector3 bone_world_pos = { p.skeleton[bone_index].x, p.skeleton[bone_index].y, p.skeleton[bone_index].z };
-                        bool is_bone_visible = true; // 默认可见
-                        if (visible_only_cfg && map_is_loaded) { // 如果需要检查可见性且地图已加载
-                            is_bone_visible = RTModel::IsVisible(my_loc, bone_world_pos); // 进行射线检测
+                        bool is_bone_visible = true;
+                        if (visible_only_cfg && map_is_loaded) {
+                            is_bone_visible = RTModel::IsVisible(my_loc, bone_world_pos);
                         }
-                        if (!is_bone_visible) continue; // 如果不可见，跳过
+                        if (!is_bone_visible) continue;
 
                         DirectX::XMFLOAT2 bone_screen_pos;
-                        if (WorldToScreen(bone_world_pos, bone_screen_pos)) { // 转换到屏幕坐标
+                        if (WorldToScreen(bone_world_pos, bone_screen_pos)) {
                             float dist_x = bone_screen_pos.x - screen_center_x;
                             float dist_y = bone_screen_pos.y - screen_center_y;
-                            float dist_sq = dist_x * dist_x + dist_y * dist_y; // 计算屏幕平方距离
+                            float dist_sq = dist_x * dist_x + dist_y * dist_y;
 
-                            if (dist_sq < fov_pixels_sq) { // 骨骼在FOV内
-                                int new_priority = get_bone_priority(bone_setting.bone_id); // 获取骨骼优先级
+                            if (dist_sq < fov_pixels_sq) {
+                                int new_priority = get_bone_priority(bone_setting.bone_id);
 
-                                // 新骨骼优先级必须 <= 已锁定优先级 (向下锁定)
                                 if (new_priority <= locked_target_priority) {
-                                    // 比较: 新骨骼优先级更高? 或者 优先级相同但离准星更近?
                                     if (new_priority < frame_best_priority || (new_priority == frame_best_priority && dist_sq < frame_best_dist_sq)) {
-                                        // 更新本帧的最佳目标为此骨骼
                                         frame_best_priority = new_priority;
                                         frame_best_dist_sq = dist_sq;
                                         frame_best_bone_id = bone_setting.bone_id;
-                                        frame_best_actor_ptr = p.actor_ptr; // 确认是锁定的 actor
+                                        frame_best_actor_ptr = p.actor_ptr;
                                         frame_best_screen_pos = bone_screen_pos;
-                                        target_found_this_frame = true; // 标记本帧找到目标
+                                        target_found_this_frame = true;
                                     }
                                 }
                             }
                         }
-                    } // 结束锁定目标的骨骼遍历
-                    break; // 已找到并处理完锁定的玩家
-                } // 结束玩家查找
+                    }
+                    break;
+                }
 
-                if (!locked_target_still_valid || !target_found_this_frame) { // 如果锁定目标失效或在FOV内找不到合适的骨骼
-                    // 解锁目标
+                if (!locked_target_still_valid || !target_found_this_frame) {
                     locked_target_ptr = 0;
                     locked_target_bone = BoneID::root;
                     locked_target_priority = 999;
-                    target_found_this_frame = false; // 确保标记为未找到 (可能之前在循环中设为true)
+                    target_found_this_frame = false;
                 }
-            } // 结束处理已锁定目标
+            }
 
-            // 遍历所有其他玩家 (寻找新目标 或 比锁定目标更好的目标)
             for (const auto& p : current_players) {
-                // 如果是锁定模式且当前玩家是已锁定的目标，则跳过 (已处理过)
                 if (use_priority_lock_mode && locked_target_ptr != 0 && p.actor_ptr == locked_target_ptr) {
                     continue;
                 }
 
-                // 基本过滤 (存在、非自己、非队友、未死亡、未忽略AI、在距离内)
                 if (!p.client_knows_about_it || p.actor_ptr == my_pawn || (p.team_id == my_team && p.team_id != -1) || p.health <= 0.1f || (ignore_ai && !p.is_ai)) continue;
                 float distance_m = p.location.Distance(my_loc) / 100.0f;
                 if (distance_m > max_dist) continue;
 
-                // 寻找这个玩家身上最佳的瞄准点
                 int player_best_priority = 999;
-                float player_best_dist_sq = fov_pixels_sq; // 初始化为此玩家的最佳距离平方
+                float player_best_dist_sq = fov_pixels_sq;
                 BoneID player_best_bone_id = BoneID::root;
                 DirectX::XMFLOAT2 player_best_screen_pos = { 0.0f, 0.0f };
-                bool player_target_found = false; // 标记是否在此玩家身上找到有效瞄准点
+                bool player_target_found = false;
 
-                for (const auto& bone_setting : bones_to_check_cfg) { // 遍历配置的/默认的骨骼
+                for (const auto& bone_setting : bones_to_check_cfg) {
                     if (!bone_setting.enabled) continue;
 
                     int bone_index = static_cast<int>(bone_setting.bone_id);
@@ -2274,12 +2272,9 @@ void GameLogic::aimbotLoop() {
                         float dist_y = bone_screen_pos.y - screen_center_y;
                         float dist_sq = dist_x * dist_x + dist_y * dist_y;
 
-                        if (dist_sq < fov_pixels_sq) { // 在FOV内
-                            // 根据模式选择最佳骨骼
+                        if (dist_sq < fov_pixels_sq) {
                             if (use_priority_lock_mode) {
-                                // 优先级模式
                                 int new_priority = get_bone_priority(bone_setting.bone_id);
-                                // 找到此玩家身上更高优先级 或 (同优先级但更近) 的骨骼
                                 if (new_priority < player_best_priority || (new_priority == player_best_priority && dist_sq < player_best_dist_sq)) {
                                     player_best_priority = new_priority;
                                     player_best_dist_sq = dist_sq;
@@ -2289,26 +2284,21 @@ void GameLogic::aimbotLoop() {
                                 }
                             }
                             else {
-                                // 就近吸附模式
                                 if (dist_sq < player_best_dist_sq) {
                                     player_best_dist_sq = dist_sq;
                                     player_best_bone_id = bone_setting.bone_id;
                                     player_best_screen_pos = bone_screen_pos;
                                     player_target_found = true;
-                                    player_best_priority = get_bone_priority(player_best_bone_id); // 记录一下优先级，虽然主要按距离选
+                                    player_best_priority = get_bone_priority(player_best_bone_id);
                                 }
                             }
                         }
                     }
-                } // 结束此玩家的骨骼遍历
+                }
 
-                // 比较此玩家的最佳瞄准点与帧内最佳目标
                 if (player_target_found) {
                     if (use_priority_lock_mode) {
-                        // 优先级模式比较
-                        // 新玩家的优先级更高? 或者 优先级相同但离准星更近?
                         if (player_best_priority < frame_best_priority || (player_best_priority == frame_best_priority && player_best_dist_sq < frame_best_dist_sq)) {
-                            // 更新帧内最佳目标
                             frame_best_priority = player_best_priority;
                             frame_best_dist_sq = player_best_dist_sq;
                             frame_best_bone_id = player_best_bone_id;
@@ -2318,81 +2308,70 @@ void GameLogic::aimbotLoop() {
                         }
                     }
                     else {
-                        // 就近吸附模式比较
                         if (player_best_dist_sq < frame_best_dist_sq) {
-                            // 更新帧内最佳目标
                             frame_best_dist_sq = player_best_dist_sq;
-                            frame_best_bone_id = player_best_bone_id; // 记录最近的骨骼
+                            frame_best_bone_id = player_best_bone_id;
                             frame_best_actor_ptr = p.actor_ptr;
                             frame_best_screen_pos = player_best_screen_pos;
-                            frame_best_priority = player_best_priority; // 也记录下优先级
+                            frame_best_priority = player_best_priority;
                             target_found_this_frame = true;
                         }
                     }
                 }
-            } // 结束所有玩家遍历
+            }
 
-            // 自瞄移动计算
-            if (target_found_this_frame) { // 如果在本帧找到了最终的目标
-                // 更新锁定状态 (仅在优先级模式下，且目标是新找到的或更新了骨骼)
+            if (target_found_this_frame) {
                 if (use_priority_lock_mode && (locked_target_ptr != frame_best_actor_ptr || locked_target_bone != frame_best_bone_id)) {
                     locked_target_ptr = frame_best_actor_ptr;
                     locked_target_bone = frame_best_bone_id;
                     locked_target_priority = frame_best_priority;
                 }
 
-                // 应用头部瞄准偏移 (Y轴向下为正)
                 if (frame_best_bone_id == BoneID::Head) {
                     frame_best_screen_pos.y += head_aim_offset_pixels;
                 }
 
-                // 计算从屏幕中心指向目标点的理想向量 (像素)
                 float move_x_ideal = frame_best_screen_pos.x - screen_center_x;
                 float move_y_ideal = frame_best_screen_pos.y - screen_center_y;
 
-                // 计算动态平滑
-                float dist_pixels = std::sqrt(move_x_ideal * move_x_ideal + move_y_ideal * move_y_ideal);
-                float dynamic_smooth = base_smooth; // 基础平滑值
-                if (dist_pixels > 1.0f) { // 避免除零或对极小移动应用过大平滑
-                    // 根据目标与准星的距离调整平滑度，距离越远越不平滑（移动越快）
-                    float distance_factor = std::clamp(dist_pixels / (fov_pixels * dynamic_smooth_distance_factor), 0.5f, max_dynamic_smooth_multiplier);
-                    dynamic_smooth = base_smooth / distance_factor;
-                    dynamic_smooth = std::max(min_dynamic_smooth, dynamic_smooth); // 限制最小平滑值
+                float ideal_dist_sq = move_x_ideal * move_x_ideal + move_y_ideal * move_y_ideal;
+                if (ideal_dist_sq <= AUTO_TRIGGER_RADIUS_SQ) {
+                    is_on_target = true;
                 }
 
-                // 计算应用平滑后的基础自瞄移动量
+                float dist_pixels = std::sqrt(ideal_dist_sq);
+                float dynamic_smooth = base_smooth;
+                if (dist_pixels > 1.0f) {
+                    float distance_factor = std::clamp(dist_pixels / (fov_pixels * dynamic_smooth_distance_factor), 0.5f, max_dynamic_smooth_multiplier);
+                    dynamic_smooth = base_smooth / distance_factor;
+                    dynamic_smooth = std::max(min_dynamic_smooth, dynamic_smooth);
+                }
+
                 aim_move_x = move_x_ideal / dynamic_smooth;
                 aim_move_y = move_y_ideal / dynamic_smooth;
 
-                // 添加随机抖动
                 aim_move_x += dist_noise(rng) * random_strength;
                 aim_move_y += dist_noise(rng) * random_strength;
-
             }
-            else { // 如果自瞄开启，但在本帧没有找到目标
-                // 重置锁定状态
+            else {
                 locked_target_ptr = 0;
                 locked_target_bone = BoneID::root;
                 locked_target_priority = 999;
             }
         }
-        else { // 自瞄总开关关闭
-            // 同样需要重置锁定状态
+        else {
             locked_target_ptr = 0;
             locked_target_bone = BoneID::root;
             locked_target_priority = 999;
-        } // 结束自瞄计算部分 (aimbot_on)
+        }
 
         // 合并移动量
-        // 最终移动量 = 自瞄移动(如果激活且找到目标) + 压枪移动(如果激活且在开火) + 上一帧剩余的小数部分
         float total_dx = aim_move_x + recoil_x + remain_dx;
         float total_dy = aim_move_y + recoil_y + remain_dy;
 
-        // 四舍五入取整得到本帧实际要移动的整数像素值
         int step_dx = static_cast<int>(std::round(total_dx));
         int step_dy = static_cast<int>(std::round(total_dy));
 
-        // 计算剩余的小数部分，留到下一帧累加
         remain_dx = total_dx - step_dx;
         remain_dy = total_dy - step_dy;
 
@@ -2400,32 +2379,16 @@ void GameLogic::aimbotLoop() {
         std::stringstream ss;
         ss << "step_dx = " << step_dx << "\n";
         ss << "step_dy = " << step_dy << "\n";
-        // 添加一个标志，指示是否正在进行压枪 (Lua脚本会用到这个标志)
-        ss << "is_recoiling = " << (recoil_on && is_firing_state ? "true" : "false") << "\n";
-        bool write_ok = atomic_write_text(lua_config_path, ss.str()); // 原子写入，防止冲突
-
-        // 日志输出
-        if (!write_ok && loop_counter % 100 == 1) { // 节流输出错误信息
-            std::cerr << "[Aimbot] !!! FAILED to write to Lua config file: " << lua_config_path.string() << std::endl;
-        }
-        /*
-        if (loop_counter % 50 == 1) { // 节流输出调试信息
-            float fov_scale_log = (current_fov > 0.0f) ? (BASE_RECOIL_FOV / current_fov) : 0.0f;
-            std::cout << "[Aimbot DBG] Aim(" << aimbot_on << ") Recoil(" << recoil_on << ") Firing(" << is_firing_state << ") "
-                      << "AimXY: " << aim_move_x << "," << aim_move_y
-                      << " RecoilXY: " << recoil_x / fov_scale_log << " (Base) * " << fov_scale_log << " (Scale) = " << recoil_x
-                      << " RemainXY: " << remain_dx << "," << remain_dy
-                      << " StepXY: " << step_dx << "," << step_dy
-                      << " FOV: " << current_fov
-                      << " Locked: " << locked_target_ptr << " Bone: " << static_cast<int>(locked_target_bone)
-                      << std::endl;
-        }
-        */
+        // 只有在非单发模式（全自动）下，才发送压枪标志
+        ss << "is_recoiling = " << (recoil_on && is_firing_state && !is_single_fire_mode ? "true" : "false") << "\n";
+        ss << "is_on_target = " << (is_on_target ? "true" : "false") << "\n";
+        ss << "is_single_fire = " << (is_single_fire_mode ? "true" : "false") << "\n"; // [新] 写入武器模式
+        bool write_ok = atomic_write_text(lua_config_path, ss.str());
 
     } // 结束 while(running)
 
-    // 程序退出前，确保重置lua文件中的移动量为 0，并设置压枪状态为 false
-    atomic_write_text(lua_config_path, "step_dx = 0\nstep_dy = 0\nis_recoiling = false\n");
+    // 确保写入所有标志
+    atomic_write_text(lua_config_path, "step_dx = 0\nstep_dy = 0\nis_recoiling = false\nis_on_target = false\nis_single_fire = false\n");
     std::cout << "[Aimbot] Server-side loop stopped." << std::endl;
 }
 

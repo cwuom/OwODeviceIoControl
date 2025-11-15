@@ -52,6 +52,9 @@
     <Filter Include="源文件\util">
       <UniqueIdentifier>{2ebd55ed-ccec-44e3-a5b7-3e281a200c77}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\asm">
+      <UniqueIdentifier>{0c62fa64-8cf4-44d5-aa1f-2a2b3ccd5d96}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -110,5 +113,10 @@
     <ClInclude Include="pe_loader.hpp">
       <Filter>头文件\peloader</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="AsmDec.asm">
+      <Filter>源文件\asm</Filter>
+    </MASM>
   </ItemGroup>
 </Project>
