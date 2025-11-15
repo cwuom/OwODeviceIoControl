@@ -21,3 +21,11 @@ unsuccessfulbuild
 vc143.idb
 vc143.pdb
 .vs/
+
+Physx 4.1/bin/
+Physx 4.1/lib/
+*.dll
+*.lib
+*.pdb
+*.exe
+*.obj
