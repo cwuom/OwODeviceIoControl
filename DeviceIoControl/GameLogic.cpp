@@ -2045,36 +2045,71 @@ WeaponType get_weapon_type(long long weapon_id) {
     return WeaponType::Unknown;
 }
 
+struct PIDController {
+    float Kp = 0.0f;
+    float Ki = 0.0f;
+    float Kd = 0.0f;
+
+    float previous_error = 0.0f;
+    float integral = 0.0f;
+    float integral_clamp = 50.0f;
+
+    float update(float error, float dt) {
+        if (dt <= 0.0001f) {
+            return 0.0f;
+        }
+
+        float p_term = Kp * error;
+
+        integral += error * dt;
+        integral = std::clamp(integral, -integral_clamp, integral_clamp);
+        float i_term = Ki * integral;
+
+        float derivative = (error - previous_error) / dt;
+        float d_term = Kd * derivative;
+
+        previous_error = error;
+
+        return p_term + i_term + d_term;
+    }
+
+    void reset() {
+        previous_error = 0.0f;
+        integral = 0.0f;
+    }
+};
+
+
 void GameLogic::aimbotLoop() {
-    auto lua_config_path = get_temp_lua_path(); // 获取临时lua文件路径
-    float remain_dx = 0.0f; // 上一帧剩余的水平移动量
-    float remain_dy = 0.0f; // 上一帧剩余的垂直移动量
-    long long loop_counter = 0; // 循环计数器，用于日志节流
-    bool is_on_target = false; // 用于自动扳机
+    auto lua_config_path = get_temp_lua_path();
+    float remain_aim_dx = 0.0f;
+    float remain_aim_dy = 0.0f;
+    float remain_recoil_dx = 0.0f;
+    float remain_recoil_dy = 0.0f;
+    long long loop_counter = 0;
+    bool is_on_target = false;
 
     constexpr float BASE_RECOIL_FOV = 90.0f;
-    const float AUTO_TRIGGER_RADIUS_SQ = 35.0f * 35.0f; // 自动扳机的像素半径
+    const float AUTO_TRIGGER_RADIUS_SQ = 35.0f * 35.0f;
 
-    // 模拟压枪所需的状态
     auto firing_start_time = std::chrono::steady_clock::now();
-    WeaponType current_weapon_type = WeaponType::Unknown; // 缓存当前武器类型
-    RecoilSetting current_recoil_setting; // 缓存当前武器的压枪设置
+    WeaponType current_weapon_type = WeaponType::Unknown;
+    RecoilSetting current_recoil_setting;
 
-    // 自瞄参数
-    float random_strength = 0.8f;
+    PIDController pid_x;
+    PIDController pid_y;
+    auto last_time = std::chrono::steady_clock::now();
+
+
+    float random_strength = 0.0f;
     float head_aim_offset_pixels = 3.5f;
-    float min_dynamic_smooth = 1.0f;
-    float max_dynamic_smooth_multiplier = 1.8f;
-    float dynamic_smooth_distance_factor = 0.4f;
 
-    // 瞄准状态，用于在帧之间保持优先级锁定
     uint64_t locked_target_ptr = 0;
     BoneID locked_target_bone = BoneID::root;
     int locked_target_priority = 999;
 
-    std::cout << "[Aimbot] Server-side loop started (Write Mode with Recoil)." << std::endl;
+    std::cout << "[Aimbot] Server-side loop started (Write Mode with Recoil + PID)." << std::endl;
 
-    // 初始化缓存的压枪设置
     {
         std::shared_lock lock(g_cfg.recoil_settings_mutex);
         if (g_cfg.weapon_recoil_settings.size() == static_cast<size_t>(WeaponType::MaxTypes)) {
@@ -2086,11 +2121,26 @@ void GameLogic::aimbotLoop() {
         }
     }
 
-    while (running.load(std::memory_order_relaxed)) { // 主循环
+    while (running.load(std::memory_order_relaxed)) {
         loop_counter++;
+
+        auto current_time = std::chrono::steady_clock::now();
+        auto delta_time_chrono = current_time - last_time;
+        last_time = current_time;
+        float dt = std::chrono::duration_cast<std::chrono::duration<float>>(delta_time_chrono).count();
+
+        if (dt > 0.1f) {
+            dt = 0.008f;
+            pid_x.reset();
+            pid_y.reset();
+        }
+        else if (dt < 0.0001f) {
+            dt = 0.0001f;
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(8));
 
-        is_on_target = false; // 默认每帧重置为 false
+        is_on_target = false;
 
         Vector3 my_loc;
         int my_team = -1;
@@ -2111,11 +2161,15 @@ void GameLogic::aimbotLoop() {
         bool recoil_on = g_cfg.simulated_recoil_enabled.load(std::memory_order_relaxed);
 
         if (!is_in_match || my_pawn == 0 || !valid_location(my_loc)) {
-            if (remain_dx != 0.0f || remain_dy != 0.0f) {
-                // 确保写入所有标志
-                atomic_write_text(lua_config_path, "step_dx = 0\nstep_dy = 0\nis_recoiling = false\nis_on_target = false\nis_single_fire = false\n");
+            if (remain_aim_dx != 0.0f || remain_aim_dy != 0.0f || remain_recoil_dx != 0.0f || remain_recoil_dy != 0.0f) {
+                atomic_write_text(lua_config_path, "aim_dx = 0\naim_dy = 0\nrecoil_dx = 0\nrecoil_dy = 0\nis_recoiling = false\nis_on_target = false\nis_single_fire = false\n");
             }
-            remain_dx = 0.0f; remain_dy = 0.0f;
+            remain_aim_dx = 0.0f; remain_aim_dy = 0.0f;
+            remain_recoil_dx = 0.0f; remain_recoil_dy = 0.0f;
+
+            pid_x.reset();
+            pid_y.reset();
+
             locked_target_ptr = 0;
             locked_target_bone = BoneID::root;
             locked_target_priority = 999;
@@ -2128,7 +2182,6 @@ void GameLogic::aimbotLoop() {
         float recoil_y = 0.0f;
         bool is_firing_state = read_is_firing_flag();
 
-        // --- 武器检测 和 连点/压枪 模式设置 ---
         bool is_single_fire_mode = false;
         {
             long long current_weapon_id = 0;
@@ -2146,7 +2199,6 @@ void GameLogic::aimbotLoop() {
                 current_weapon_type = new_weapon_type;
             }
 
-            // 根据当前武器类型设置连点标志
             switch (current_weapon_type) {
             case WeaponType::Shotgun:
             case WeaponType::DMR:
@@ -2154,16 +2206,13 @@ void GameLogic::aimbotLoop() {
             case WeaponType::Pistol:
                 is_single_fire_mode = true;
                 break;
-                // 默认 (Rifle, SMG, LMG, Unknown) 都是全自动压枪
             default:
                 is_single_fire_mode = false;
                 break;
             }
         }
-        // --- 武器检测结束 ---
 
-
-        if (recoil_on && !is_single_fire_mode) { // 只有全自动武器才计算压枪
+        if (recoil_on && !is_single_fire_mode) {
             {
                 std::shared_lock lock(g_cfg.recoil_settings_mutex);
                 int index = static_cast<int>(current_weapon_type);
@@ -2203,7 +2252,6 @@ void GameLogic::aimbotLoop() {
             firing_start_time = std::chrono::steady_clock::now();
         }
 
-        // 自瞄计算
         float aim_move_x = 0.0f;
         float aim_move_y = 0.0f;
         bool target_found_this_frame = false;
@@ -2213,7 +2261,6 @@ void GameLogic::aimbotLoop() {
             float screen_center_y = static_cast<float>(g_game_height) / 2.0f;
             float fov_pixels = g_cfg.aimbot_fov.load(std::memory_order_relaxed);
             float fov_pixels_sq = fov_pixels * fov_pixels;
-            float base_smooth = std::max(1.0f, g_cfg.aimbot_smooth.load(std::memory_order_relaxed));
             float max_dist = g_cfg.aimbot_max_distance.load(std::memory_order_relaxed);
             bool visible_only_cfg = g_cfg.aimbot_visible_only.load(std::memory_order_relaxed);
             bool ignore_ai = g_cfg.aimbot_ignore_ai.load(std::memory_order_relaxed);
@@ -2251,7 +2298,6 @@ void GameLogic::aimbotLoop() {
                 bool locked_target_still_valid = false;
                 for (const auto& p : current_players) {
                     if (p.actor_ptr != locked_target_ptr) continue;
-
                     if (!p.client_knows_about_it || (p.team_id == my_team && p.team_id != -1) || p.health <= 0.1f) {
                         break;
                     }
@@ -2259,33 +2305,27 @@ void GameLogic::aimbotLoop() {
                     if (distance_m > max_dist) {
                         break;
                     }
-
                     locked_target_still_valid = true;
-
                     for (const auto& bone_setting : bones_to_check_cfg) {
                         if (!bone_setting.enabled) continue;
-
                         int bone_index = static_cast<int>(bone_setting.bone_id);
                         if (bone_index < 0 || bone_index >= NUM_BONES || !is_valid_bone_position(p.skeleton[bone_index])) continue;
-
                         Vector3 bone_world_pos = { p.skeleton[bone_index].x, p.skeleton[bone_index].y, p.skeleton[bone_index].z };
                         bool is_bone_visible = true;
                         if (visible_only_cfg && map_is_loaded) {
                             is_bone_visible = RTModel::IsVisible(my_loc, bone_world_pos);
                         }
                         if (!is_bone_visible) continue;
-
                         DirectX::XMFLOAT2 bone_screen_pos;
                         if (WorldToScreen(bone_world_pos, bone_screen_pos)) {
                             float dist_x = bone_screen_pos.x - screen_center_x;
                             float dist_y = bone_screen_pos.y - screen_center_y;
                             float dist_sq = dist_x * dist_x + dist_y * dist_y;
-
                             if (dist_sq < fov_pixels_sq) {
                                 int new_priority = get_bone_priority(bone_setting.bone_id);
-
                                 if (new_priority <= locked_target_priority) {
                                     if (new_priority < frame_best_priority || (new_priority == frame_best_priority && dist_sq < frame_best_dist_sq)) {
+
                                         frame_best_priority = new_priority;
                                         frame_best_dist_sq = dist_sq;
                                         frame_best_bone_id = bone_setting.bone_id;
@@ -2299,7 +2339,6 @@ void GameLogic::aimbotLoop() {
                     }
                     break;
                 }
-
                 if (!locked_target_still_valid || !target_found_this_frame) {
                     locked_target_ptr = 0;
                     locked_target_bone = BoneID::root;
@@ -2312,36 +2351,29 @@ void GameLogic::aimbotLoop() {
                 if (use_priority_lock_mode && locked_target_ptr != 0 && p.actor_ptr == locked_target_ptr) {
                     continue;
                 }
-
                 if (!p.client_knows_about_it || p.actor_ptr == my_pawn || (p.team_id == my_team && p.team_id != -1) || p.health <= 0.1f || (ignore_ai && !p.is_ai)) continue;
                 float distance_m = p.location.Distance(my_loc) / 100.0f;
                 if (distance_m > max_dist) continue;
-
                 int player_best_priority = 999;
                 float player_best_dist_sq = fov_pixels_sq;
                 BoneID player_best_bone_id = BoneID::root;
                 DirectX::XMFLOAT2 player_best_screen_pos = { 0.0f, 0.0f };
                 bool player_target_found = false;
-
                 for (const auto& bone_setting : bones_to_check_cfg) {
                     if (!bone_setting.enabled) continue;
-
                     int bone_index = static_cast<int>(bone_setting.bone_id);
                     if (bone_index < 0 || bone_index >= NUM_BONES || !is_valid_bone_position(p.skeleton[bone_index])) continue;
-
                     Vector3 bone_world_pos = { p.skeleton[bone_index].x, p.skeleton[bone_index].y, p.skeleton[bone_index].z };
                     bool is_bone_visible = true;
                     if (visible_only_cfg && map_is_loaded) {
                         is_bone_visible = RTModel::IsVisible(my_loc, bone_world_pos);
                     }
                     if (!is_bone_visible) continue;
-
                     DirectX::XMFLOAT2 bone_screen_pos;
                     if (WorldToScreen(bone_world_pos, bone_screen_pos)) {
                         float dist_x = bone_screen_pos.x - screen_center_x;
                         float dist_y = bone_screen_pos.y - screen_center_y;
                         float dist_sq = dist_x * dist_x + dist_y * dist_y;
-
                         if (dist_sq < fov_pixels_sq) {
                             if (use_priority_lock_mode) {
                                 int new_priority = get_bone_priority(bone_setting.bone_id);
@@ -2365,7 +2397,6 @@ void GameLogic::aimbotLoop() {
                         }
                     }
                 }
-
                 if (player_target_found) {
                     if (use_priority_lock_mode) {
                         if (player_best_priority < frame_best_priority || (player_best_priority == frame_best_priority && player_best_dist_sq < frame_best_dist_sq)) {
@@ -2395,6 +2426,9 @@ void GameLogic::aimbotLoop() {
                     locked_target_ptr = frame_best_actor_ptr;
                     locked_target_bone = frame_best_bone_id;
                     locked_target_priority = frame_best_priority;
+
+                    pid_x.reset();
+                    pid_y.reset();
                 }
 
                 if (frame_best_bone_id == BoneID::Head) {
@@ -2409,56 +2443,73 @@ void GameLogic::aimbotLoop() {
                     is_on_target = true;
                 }
 
-                float dist_pixels = std::sqrt(ideal_dist_sq);
-                float dynamic_smooth = base_smooth;
-                if (dist_pixels > 1.0f) {
-                    float distance_factor = std::clamp(dist_pixels / (fov_pixels * dynamic_smooth_distance_factor), 0.5f, max_dynamic_smooth_multiplier);
-                    dynamic_smooth = base_smooth / distance_factor;
-                    dynamic_smooth = std::max(min_dynamic_smooth, dynamic_smooth);
+                float smooth_factor = g_cfg.aimbot_smooth.load(std::memory_order_relaxed);
+
+                if (smooth_factor < 1.0f) {
+                    smooth_factor = 1.0f;
                 }
 
-                aim_move_x = move_x_ideal / dynamic_smooth;
-                aim_move_y = move_y_ideal / dynamic_smooth;
+                float dynamic_kp = 1.0f / smooth_factor;
+
+                pid_x.Kp = dynamic_kp;  pid_y.Kp = dynamic_kp;
+                pid_x.Ki = 0.0f;        pid_y.Ki = 0.0f;
+                pid_x.Kd = 0.0f;        pid_y.Kd = 0.0f;
+
+                pid_x.integral = 0.0f;  pid_y.integral = 0.0f;
+
+                aim_move_x = pid_x.update(move_x_ideal, dt);
+                aim_move_y = pid_y.update(move_y_ideal, dt);
 
                 aim_move_x += dist_noise(rng) * random_strength;
                 aim_move_y += dist_noise(rng) * random_strength;
+
             }
             else {
+                pid_x.reset();
+                pid_y.reset();
+
                 locked_target_ptr = 0;
                 locked_target_bone = BoneID::root;
                 locked_target_priority = 999;
             }
         }
         else {
+            pid_x.reset();
+            pid_y.reset();
+
             locked_target_ptr = 0;
             locked_target_bone = BoneID::root;
             locked_target_priority = 999;
         }
 
-        // 合并移动量
-        float total_dx = aim_move_x + recoil_x + remain_dx;
-        float total_dy = aim_move_y + recoil_y + remain_dy;
+        float total_aim_dx = aim_move_x + remain_aim_dx;
+        float total_aim_dy = aim_move_y + remain_aim_dy;
+        float total_recoil_dx = recoil_x + remain_recoil_dx;
+        float total_recoil_dy = recoil_y + remain_recoil_dy;
 
-        int step_dx = static_cast<int>(std::round(total_dx));
-        int step_dy = static_cast<int>(std::round(total_dy));
+        int step_aim_dx = static_cast<int>(std::round(total_aim_dx));
+        int step_aim_dy = static_cast<int>(std::round(total_aim_dy));
+        int step_recoil_dx = static_cast<int>(std::round(total_recoil_dx));
+        int step_recoil_dy = static_cast<int>(std::round(total_recoil_dy));
 
-        remain_dx = total_dx - step_dx;
-        remain_dy = total_dy - step_dy;
+        remain_aim_dx = total_aim_dx - step_aim_dx;
+        remain_aim_dy = total_aim_dy - step_aim_dy;
+        remain_recoil_dx = total_recoil_dx - step_recoil_dx;
+        remain_recoil_dy = total_recoil_dy - step_recoil_dy;
 
-        // 写入 Lua 文件
         std::stringstream ss;
-        ss << "step_dx = " << step_dx << "\n";
-        ss << "step_dy = " << step_dy << "\n";
-        // 只有在非单发模式（全自动）下，才发送压枪标志
+        ss << "aim_dx = " << step_aim_dx << "\n";
+        ss << "aim_dy = " << step_aim_dy << "\n";
+        ss << "recoil_dx = " << step_recoil_dx << "\n";
+        ss << "recoil_dy = " << step_recoil_dy << "\n";
         ss << "is_recoiling = " << (recoil_on && is_firing_state && !is_single_fire_mode ? "true" : "false") << "\n";
         ss << "is_on_target = " << (is_on_target ? "true" : "false") << "\n";
-        ss << "is_single_fire = " << (is_single_fire_mode ? "true" : "false") << "\n"; // [新] 写入武器模式
+        ss << "is_single_fire = " << (is_single_fire_mode ? "true" : "false") << "\n";
         bool write_ok = atomic_write_text(lua_config_path, ss.str());
 
-    } // 结束 while(running)
+    }
 
-    // 确保写入所有标志
-    atomic_write_text(lua_config_path, "step_dx = 0\nstep_dy = 0\nis_recoiling = false\nis_on_target = false\nis_single_fire = false\n");
+    atomic_write_text(lua_config_path, "aim_dx = 0\naim_dy = 0\nrecoil_dx = 0\nrecoil_dy = 0\nis_recoiling = false\nis_on_target = false\nis_single_fire = false\n");
     std::cout << "[Aimbot] Server-side loop stopped." << std::endl;
 }
 
