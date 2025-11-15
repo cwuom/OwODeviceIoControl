@@ -68,6 +68,7 @@ private:
 	void consoleLoop() const;
 	void mapModelLoop();
 	bool initialize();
+	uintptr_t TranslateRemotePointer(uintptr_t remotePtr) const;
 
 	// 自瞄辅助函数
 	bool WorldToScreen(const Vector3& worldPos, DirectX::XMFLOAT2& screenPos) const;
@@ -77,7 +78,7 @@ private:
 	bool read_is_firing_flag() const;
 
 	Vector3 read_enc_location(ULONG64 comp_ptr) const;
-	void decrypt(ULONG32 Pid, int* a2, unsigned int a3, short a4) const;
+	void decrypt(uint32_t* a2, unsigned int a3, short a4) const;
 	ULONG64 decrypt_shift(ULONG64 Address) const;
 
 	static GameLogic* s_instance;
@@ -188,6 +189,7 @@ private:
 
 
 	typedef void (*DecFunc_t)(ULONG64 EncTable, void* data, DWORD size, WORD handle);
+	typedef void (*DecFunc2_t)(void* data, DWORD size, WORD handle, ULONG64 EncTable);
 
 	// 用于模拟执行的成员
 	ZydisDecoder decoder;
@@ -199,6 +201,8 @@ private:
 
 	// 用于安全调用
 	static bool CallDecFuncSafely(DecFunc_t DecFunc, ULONG64 remoteTableAddr, int* position, DWORD size, WORD handler);
+	bool CallDecFuncSafely2(DecFunc2_t DecFunc2, uint32_t* a2, unsigned int a3, short a4,
+	                        ULONG64 remoteTableAddr) const;
 
 	// 静态的 VEH 异常处理程序
 	static LONG WINAPI VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo);

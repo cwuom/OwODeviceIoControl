@@ -113,6 +113,9 @@
     <ClInclude Include="pe_loader.hpp">
       <Filter>头文件\peloader</Filter>
     </ClInclude>
+    <ClInclude Include="defs.h">
+      <Filter>头文件\decryption</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="AsmDec.asm">

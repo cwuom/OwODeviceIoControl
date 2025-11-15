@@ -148,6 +148,7 @@
     <ClInclude Include="client.h" />
     <ClInclude Include="common_packets.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="defs.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameLogic.h" />
     <ClInclude Include="NetworkServer.h" />

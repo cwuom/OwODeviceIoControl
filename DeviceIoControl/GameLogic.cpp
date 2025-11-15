@@ -13,6 +13,8 @@
 #include <random>
 #include <cmath>
 
+#include "defs.h"
+
 // PhysX Libs
 #pragma comment(lib, "PhysXFoundation_64.lib")
 #pragma comment(lib, "PhysX_64.lib")
@@ -74,9 +76,9 @@ bool GameLogic::initialize() {
         ZydisDecoderInit(&g_decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64);
         ZydisFormatterInit(&g_formatter, ZYDIS_FORMATTER_STYLE_INTEL);
 
-        std::cout << "[Main] Loading PE..." << std::endl;
+        std::cout << "[GameLogic-Decrypt] Loading PE..." << std::endl;
         if (!loader.Load("DeltaForceClient-Win64-Shipping.exe", IMAGE_BASE)) {
-            std::cerr << "[Main] Failed to load PE" << std::endl;
+            std::cerr << "[GameLogic-Decrypt] Failed to load PE" << std::endl;
             system("pause");
             return 1;
         }
@@ -89,6 +91,15 @@ bool GameLogic::initialize() {
 }
 
 // ------------------------- dynamic decrypt functions -------------------------
+
+uintptr_t GameLogic::TranslateRemotePointer(uintptr_t remotePtr) const
+{
+    // 去掉 MAGIC
+    if ((remotePtr & MAGIC_MASK) == MAGIC)
+        remotePtr ^= MAGIC;
+    uintptr_t rva = remotePtr - IMAGE_BASE;
+    return reinterpret_cast<uintptr_t>(this->loader.GetFunctionByRVA(rva));
+}
 
 uintptr_t GameLogic::GetRegisterValue(PCONTEXT context, ZydisRegister reg) {
     switch (reg) {
@@ -189,10 +200,17 @@ bool GameLogic::FixBaseDisplacementMemoryAccess(PCONTEXT context, uintptr_t valu
     if (instruction.mnemonic == ZYDIS_MNEMONIC_MOV && instruction.operand_count_visible > 1 &&
         operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER) {
         ZydisRegister destReg = operands[0].reg.value;
+
         if (operands[0].size == 64)
         {
-            value |= MAGIC;
+            bool is_code_pointer = (value >= IMAGE_BASE && value < (IMAGE_BASE + 0x20000000));
+
+            if (!is_code_pointer)
+            {
+                value |= MAGIC;
+            }
         }
+
         SetRegisterValue(context, destReg, value);
         context->Rip += instruction.length;
         return true;
@@ -219,7 +237,7 @@ bool GameLogic::FixBaseDisplacementMemoryAccess(PCONTEXT context, uintptr_t valu
             extendedValue = value & 0xFFFFFFFF;
             break;
         default:
-            std::cout << "不支持的源操作数大小: " << srcSize << std::endl;
+            std::cout << u8"不支持的源操作数大小: " << srcSize << std::endl;
             return false;
         }
 
@@ -254,7 +272,7 @@ bool GameLogic::FixBaseDisplacementMemoryAccess(PCONTEXT context, uintptr_t valu
             newValue = currentValue + value;
             break;
         default:
-            std::cout << "不支持的操作数大小: " << operands[0].size << std::endl;
+            std::cout << u8"不支持的操作数大小: " << operands[0].size << std::endl;
             return false;
         }
 
@@ -289,7 +307,7 @@ bool GameLogic::FixBaseDisplacementMemoryAccess(PCONTEXT context, uintptr_t valu
             newValue = currentValue - value;
             break;
         default:
-            std::cout << "不支持的操作数大小: " << operands[0].size << std::endl;
+            std::cout << u8"不支持的操作数大小: " << operands[0].size << std::endl;
             return false;
         }
 
@@ -326,7 +344,7 @@ bool GameLogic::FixBaseDisplacementMemoryAccess(PCONTEXT context, uintptr_t valu
                 result = (int64_t)value * immediate;
                 break;
             default:
-                std::cout << "不支持的操作数大小: " << operands[0].size << std::endl;
+                std::cout << u8"不支持的操作数大小: " << operands[0].size << std::endl;
                 return false;
             }
 
@@ -366,7 +384,7 @@ bool GameLogic::FixBaseDisplacementMemoryAccess(PCONTEXT context, uintptr_t valu
                 result = currentValue * (int64_t)value;
                 break;
             default:
-                std::cout << "不支持的操作数大小: " << operands[0].size << std::endl;
+                std::cout << u8"不支持的操作数大小: " << operands[0].size << std::endl;
                 return false;
             }
 
@@ -404,7 +422,7 @@ bool GameLogic::FixBaseDisplacementMemoryAccess(PCONTEXT context, uintptr_t valu
         // 计算新的值：当前值 OR 从内存读取的值
         uintptr_t newValue = currentValue | value;
 
-        std::cout << std::hex << "OR 操作: " << currentValue << " | " << value
+        std::cout << std::hex << u8"OR 操作: " << currentValue << " | " << value
             << " = " << newValue << std::endl;
 
         SetRegisterValue(context, destReg, newValue);
@@ -428,29 +446,52 @@ bool GameLogic::FixBaseDisplacementMemoryAccess(PCONTEXT context, uintptr_t valu
         return true;
     }
 
-    if (instruction.mnemonic == ZYDIS_MNEMONIC_CALL && instruction.operand_count_visible == 1 &&
-        operands[0].type == ZYDIS_OPERAND_TYPE_MEMORY) {
 
-        // 从内存中读取的是函数指针
-        uintptr_t functionPointer = value;
-        // 获取返回地址（下一条指令）
-        uintptr_t returnAddress = context->Rip + instruction.length;
+    // 处理 MOVSXD 指令
+    if (instruction.mnemonic == ZYDIS_MNEMONIC_MOVSXD &&
+        instruction.operand_count_visible >= 2 &&
+        operands[0].type == ZYDIS_OPERAND_TYPE_REGISTER &&
+        operands[1].type == ZYDIS_OPERAND_TYPE_MEMORY)
+    {
+        ZydisRegister destReg = operands[0].reg.value;   // 目标寄存器
 
-        // 将返回地址压入栈中
-        context->Rsp -= 8; // 64 位系统，栈是 8 字节对齐
-        SIZE_T bytesWritten;
-        if (!WriteProcessMemory(GetCurrentProcess(), (LPVOID)context->Rsp, &returnAddress, 8, &bytesWritten)) {
-            std::cout << "压入返回地址失败" << std::endl;
-            return false;
+        // value 是 VEH 刚才读出的内存内容, 已经被零扩展到了 64bit
+        uintptr_t signExtended;
+        switch (operands[1].size)
+        {
+	        case 8:  signExtended = (intptr_t)(int8_t)value; break;
+	        case 16: signExtended = (intptr_t)(int16_t)value; break;
+	        case 32:
+	        default: signExtended = (intptr_t)(int32_t)value; break;
         }
 
-        // 设置指令指针为函数地址
-        context->Rip = functionPointer;
-
+        SetRegisterValue(context, destReg, signExtended);
+        context->Rip += instruction.length;   // 跳过本条指令
         return true;
     }
 
-    std::cout << "不支持的指令: " << ZydisMnemonicGetString(instruction.mnemonic) << std::endl;
+    if (instruction.mnemonic == ZYDIS_MNEMONIC_CALL &&
+        operands[0].type == ZYDIS_OPERAND_TYPE_MEMORY)
+    {
+        uintptr_t remoteFunc = value;
+
+        uintptr_t localFunc = s_instance->TranslateRemotePointer(remoteFunc);
+        if (!localFunc)
+        {
+            std::cout << "VEH: cannot translate remote call 0x"
+                << std::hex << remoteFunc << std::dec << '\n';
+            return false;                // 让外层继续崩，不再瞎跳
+        }
+
+        uintptr_t retAddr = context->Rip + instruction.length;
+        context->Rsp -= 8;
+        *(uintptr_t*)context->Rsp = retAddr;      // 直接写自己的栈即可，无需 WriteProcessMemory
+
+        context->Rip = localFunc;
+        return true;
+    }
+
+    std::cout << u8"不支持的指令: " << ZydisMnemonicGetString(instruction.mnemonic) << std::endl;
     return false;
 }
 
@@ -580,6 +621,19 @@ bool GameLogic::CallDecFuncSafely(DecFunc_t DecFunc, ULONG64 remoteTableAddr, in
     }
 }
 
+bool GameLogic::CallDecFuncSafely2(DecFunc2_t DecFunc2, uint32_t* a2, unsigned int a3, short a4, ULONG64 remoteTableAddr) const {
+    __try {
+        g_remotePointerCache.clear();
+        DecFunc2(a2, a3, a4, MAGIC | remoteTableAddr);
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+        std::cerr << "[CallDecFunc] Exception caught: 0x" << std::hex
+            << GetExceptionCode() << std::dec << std::endl;
+        return false;
+    }
+}
+
 // 辅助函数：定义什么是异常坐标
 // 我们只检查 a3 == 12 (Vector3) 的情况
 static bool is_decrypted_coord_abnormal(const int* a2, unsigned int a3)
@@ -612,17 +666,17 @@ static bool is_decrypted_coord_abnormal(const int* a2, unsigned int a3)
 }
 
 // 动态解密
-void __fastcall GameLogic::decrypt(ULONG32 Pid, int* a2, unsigned int a3, __int16 a4) const
+void __fastcall GameLogic::decrypt(uint32_t* a2, unsigned int a3, short a4) const
 {
     // 如果句柄是 0xffff，说明未加密，直接返回
     if (a4 == 0xffff)
     {
-        //std::cout << "[Main] Data is NOT encrypted (handler=0xffff)..." << std::endl;
+        //std::cout << "[GameLogic-Decrypt] Data is NOT encrypted (handler=0xffff)..." << std::endl;
         return;
     }
 
     // 读取游戏当前使用的解密函数包装器
-    uintptr_t decFuncPtr = read<uintptr_t>(0x15432F5A8);
+    uintptr_t decFuncPtr = read<uintptr_t>(0x154A525E8);
     uintptr_t targetFuncRVA;
     uintptr_t encTableAddr;
 
@@ -630,164 +684,93 @@ void __fastcall GameLogic::decrypt(ULONG32 Pid, int* a2, unsigned int a3, __int1
 
     switch (decFuncPtr)
     {
-    case 0x142843E80:
-        //std::cout << "[Main] Using decrypt variant 1" << std::endl;
-        targetFuncRVA = 0x1427DEC50 - IMAGE_BASE;  // 对应 sub_1427DEC50
-        encTableAddr = 0x153FBF8B0;
-        effectiveTableAddr = encTableAddr;
-        break;
+	    case 0x1427DC1E0:
+	        //std::cout << "[GameLogic-Decrypt] Using decrypt variant 1" << std::endl;
+	        targetFuncRVA = 0x14D963440 - IMAGE_BASE;  // 对应 sub_14D963440
+	        encTableAddr = read<uint64_t>(read<uint64_t>(0x1538ABC80) + 0x8);
+	        effectiveTableAddr = encTableAddr;
+	        break;
 
-    case 0x142843EA0:
-        //std::cout << "[Main] Using decrypt variant 2" << std::endl;
-        targetFuncRVA = 0x1427ECBC0 - IMAGE_BASE;  // 对应 sub_1427ECBC0
-        encTableAddr = 0x153FBF838;
-        effectiveTableAddr = encTableAddr;
-        break;
-
-    case 0x142843EC0:
-        //std::cout << "[Main] Using decrypt variant 3" << std::endl;
-        targetFuncRVA = 0x1427FAD40 - IMAGE_BASE;  // 对应 sub_1427FAD40
-        encTableAddr = 0x153FBF7C8;
-        effectiveTableAddr = encTableAddr;
-        break;
-
-    case 0x142843EE0:
-        //std::cout << "[Main] Using decrypt variant 4" << std::endl;
-        targetFuncRVA = 0x1428097D0 - IMAGE_BASE;  // 对应 sub_1428097D0
-        encTableAddr = 0x153FBF710;
-        effectiveTableAddr = encTableAddr;
-        break;
-
-    case 0x142843F00:
-        //std::cout << "[Main] Using decrypt variant 5" << std::endl;
-        targetFuncRVA = 0x1428177F0 - IMAGE_BASE;  // 对应 sub_1428177F0
-        encTableAddr = 0x153FBF990;
-        effectiveTableAddr = encTableAddr;
-        break;
-
-    case 0x142843F20:
-        //std::cout << "[Main] Using decrypt variant 6" << std::endl;
-        targetFuncRVA = 0x1428261A0 - IMAGE_BASE;  // 对应 sub_1428261A0
-        encTableAddr = 0x153FBF4F0;
-        effectiveTableAddr = read<ULONG64>(encTableAddr);
-        break;
-
-    case 0x142843F40:
-        //std::cout << "[Main] Using decrypt variant 7" << std::endl;
-        targetFuncRVA = 0x142834A10 - IMAGE_BASE;
-        encTableAddr = 0x153FBF4F8;
-        effectiveTableAddr = read<ULONG64>(encTableAddr);
-        break;
-
-    case 0x142843F60:
-        std::cout << "[Main] Using decrypt variant 8" << std::endl;
-        targetFuncRVA = 0x14099D820 - IMAGE_BASE;  // 对应 sub_14099D820
-        encTableAddr = 0x15435AB98;
-        effectiveTableAddr = encTableAddr;
-        break;
-
-    default:
-        std::cerr << "[Main] Unknown decrypt function: 0x" << std::hex << decFuncPtr << std::dec << std::endl;
-        return;
+	    default:
+	        std::cerr << "[GameLogic-Decrypt] Unknown decrypt function: 0x" << std::hex << decFuncPtr << std::dec << std::endl;
+	        return;
     }
 
-    if (effectiveTableAddr == 0 && (decFuncPtr == 0x142843F20 || decFuncPtr == 0x142843F40))
-    {
-        return;
-    }
+	//std::cout << "enctable" << std::hex << effectiveTableAddr << std::dec << std::endl;
+    //if (effectiveTableAddr == 0 && (decFuncPtr == 0x142843F20 || decFuncPtr == 0x142843F40))
+    //{
+    //    return;
+    //}
 
 
     // 加载对应的函数
     void* funcPtr = this->loader.GetFunctionByRVA(targetFuncRVA);
     if (!funcPtr) {
-        std::cerr << "[Main] Failed to load function!" << std::endl;
+        std::cerr << "[GameLogic-Decrypt] Failed to load function!" << std::endl;
         return;
     }
 
-    DecFunc_t DecFunc = (DecFunc_t)funcPtr;
+    DecFunc2_t DecFunc = (DecFunc2_t)funcPtr;
 
-    if (CallDecFuncSafely(DecFunc, MAGIC | effectiveTableAddr, a2, a3, a4)) {
+    if (CallDecFuncSafely2(DecFunc, a2, a3, a4, MAGIC | effectiveTableAddr)) {
         // 解密成功，什么也不用做
     }
     else {
-        std::cerr << "[Main] DecFunc failed or crashed\n";
+        std::cerr << "[GameLogic-Decrypt] DecFunc failed or crashed\n";
     }
 }
 
 // 解密 >> 4
 ULONG64 GameLogic::decrypt_shift(ULONG64 Address) const
 {
-    static ULONG32 dword_154350830;
-    if (!dword_154350830)
+    uint64_t v1 = read<uint64_t>(Address);
+    if (!v1)
     {
-        dword_154350830 = read<ULONG32>(0x154350830);
+        return 0;
     }
-    static ULONG32 dword_1543507E8;
-    if (!dword_1543507E8)
+    uint64_t v3 = HIWORD(v1) & 0x7FFF;
+    uint64_t v4 = v1 >> 63;
+    int v5 = read<ULONG32>(0x154A7D980) & (1 << SBYTE6(v1));
+    uint64_t v6 = v1 & 0xFFFFFFFFFFFF;
+    uint64_t v10 = v6;
+    uintptr_t targetFuncRVA;
+    uintptr_t encTableAddr;
+
+    if ((BYTE)v4 && v5)
     {
-        dword_1543507E8 = read<ULONG32>(0x1543507E8);
-    }
-
-    ULONG64 Temp = read<ULONG64>(Address);
-    ULONG64 Ret = Temp >> 4;
-
-    if (!Ret) return NULL;
-
-    ULONG32 Offset = Temp & 0xF;
-    uintptr_t targetFuncRVA = 0;
-    uintptr_t encTableAddr = 0;
-
-    ULONG64 effectiveTableAddr = 0;
-    if (_bittest(reinterpret_cast<const LONG*>(&dword_154350830), Offset))
-    {
-        switch (dword_1543507E8)
+        if (read<ULONG32>(0x153F960C0) == 1)
         {
-        case 1:
-            //sub_14099D820(&qword_15435AB98, (int*)&v9, 4u, v5);
-            //return v9 & 0xFFFFFFFFFFFFFFF0uLL;
-            targetFuncRVA = 0x14099D820 - IMAGE_BASE;  // 对应 sub_14099D820
-            encTableAddr = 0x15435AB98;
-            effectiveTableAddr = encTableAddr;
-            break;
-        case 2:
-            //sub_140973130(&qword_15435ABA8, &v9, 4, v5);
-            //return v9 & 0xFFFFFFFFFFFFFFF0uLL;
-            targetFuncRVA = 0x140973130 - IMAGE_BASE;  // 对应 sub_140973130
-            encTableAddr = 0x15435ABA8;
-            effectiveTableAddr = encTableAddr;
-            break;
-        case 3:
-            //sub_1409813D0(&qword_15435ABB8, &v9, 4, v5);
-            //return v9 & 0xFFFFFFFFFFFFFFF0uLL;
-            targetFuncRVA = 0x1409813D0 - IMAGE_BASE;  // 对应 sub_1409813D0
-            encTableAddr = 0x15435ABB8;
-            effectiveTableAddr = encTableAddr;
-            break;
-        case 4:
-            //sub_14098F3A0(&qword_15435ABC8, &v9, 4, v5);
-            //return v9 & 0xFFFFFFFFFFFFFFF0uLL;
-            targetFuncRVA = 0x14098F3A0 - IMAGE_BASE;  // 对应 sub_14098F3A0
-            encTableAddr = 0x15435ABC8;
-            effectiveTableAddr = encTableAddr;
-            break;
+            targetFuncRVA = 0x140946670 - IMAGE_BASE;  // 对应 sub_140946670
+
+            // 加载对应的函数
+            void* funcPtr = this->loader.GetFunctionByRVA(targetFuncRVA);
+            if (!funcPtr) {
+                std::cerr << "[GameLogic-Decrypt] Failed to load function!" << std::endl;
+            }
+            //sub_140946670(read<ULONG32>(0x154A7D9F0), (int*)&v10, 4, v3);
+            DecFunc_t DecFunc = (DecFunc_t)funcPtr;
+            if (CallDecFuncSafely(DecFunc, MAGIC | read<ULONG32>(0x154A7D9F0), (int*)&v10, 4, v3)) {
+                // 解密成功，什么也不用做
+            }
+            else {
+                std::cerr << "[GameLogic-Decrypt] DecFunc failed or crashed\n";
+            }
         }
+        else
+        {
+            std::cout << u8"完蛋了!!!" << std::endl;
+            //v9 &= ~1u;
+            //v7 = v3;
+            //v8 = 0;
+            //off_154A525E8(&v10, 4, &v7);
+            //if ((v9 & 1) != 0)
+            //    off_154A525F8(&v7);
+        }
+        v6 = v10 & 0xFFFFFFFFFFFFLL;
+        if ((v10 & 0xFFFFFFFFFFFFuLL) >= 0x800000000000LL)
+            return v10 & 0xFFFFFFFFFFFFLL | 0xFFFF000000000000uLL;
     }
-
-    // 加载对应的函数
-    void* funcPtr = this->loader.GetFunctionByRVA(targetFuncRVA);
-    if (!funcPtr) {
-        std::cerr << "[Main] Failed to load function!" << std::endl;
-        return Ret;
-    }
-
-    DecFunc_t DecFunc = (DecFunc_t)funcPtr;
-    //decrypt(pid, (int*)&Ret, 4, Offset);
-    if (CallDecFuncSafely(DecFunc, MAGIC | effectiveTableAddr, (int*)&Ret, 4, Offset)) {
-        return Ret;
-    }
-    std::cerr << "[Main] DecFunc failed or crashed\n";
-
-    return Ret;
+    return v6;
 }
 
 // 读取加密坐标
@@ -795,7 +778,7 @@ inline Vector3 GameLogic::read_enc_location(ULONG64 comp_ptr) const
 {
     FEncVector enc = read<FEncVector>(comp_ptr + Offsets::RelativeLocation);
     if (enc.EncHandler.bEncrypted) {
-        decrypt(pid, reinterpret_cast<int*>(&enc.X), 12, enc.EncHandler.Index);
+        decrypt((uint32_t*)&enc, 12, enc.EncHandler.Index);
     }
     return { enc.X, enc.Y, enc.Z };
 }
@@ -1326,7 +1309,7 @@ Vector3 GameLogic::get_actor_location(ULONGLONG actor_ptr) const
             return { 0, 0, 0 };
         }
 
-        decrypt(pid, reinterpret_cast<int*>(&encrypted_location.X), 12, encrypted_location.EncHandler.Index);
+        decrypt(reinterpret_cast<uint32_t*>(&encrypted_location), 12, encrypted_location.EncHandler.Index);
 
         if (g_cfg.debug.load()) {
             std::cout << "[Debug] Actor Location Decrypted - X: " << encrypted_location.X
@@ -1360,7 +1343,7 @@ void GameLogic::get_bone_world_positions(ULONGLONG mesh_ptr, DirectX::XMFLOAT3* 
     if (component_to_world.EncHandler.bEncrypted)
     {
         if (pid != 0) {
-            decrypt(pid, reinterpret_cast<int*>(&component_to_world.Translation), sizeof(Vector3), component_to_world.EncHandler.Index);
+            decrypt(reinterpret_cast<uint32_t*>(&component_to_world.Translation), sizeof(Vector3), component_to_world.EncHandler.Index);
             if (g_cfg.debug.load()) {
                 std::cout << u8"[DEBUG BONE] C2W - Translation: ("
                     << component_to_world.Translation.x << ", " << component_to_world.Translation.y << ", " << component_to_world.Translation.z << ")" << std::endl;
@@ -1554,7 +1537,15 @@ std::optional<bool> GameLogic::try_read_open_state_once(const ULONGLONG actor, c
         v = read<BYTE>(actor + Offsets::bIsOpened);
         if (cls == StaticClass::HackerPC)
         {
-            v = read<BYTE>(actor + Offsets::bDonwload) == 0;
+            // 读取 DownloadExecuteComponent 组件的指针
+            uint64_t comp_ptr = read<uint64_t>(actor + Offsets::DownloadExecuteComponent);
+            if (comp_ptr) {
+                uint32_t state = read<uint32_t>(comp_ptr + Offsets::DownloadState);
+                v = (state != 0);
+            }
+            else {
+                v = 0; 
+            }
         }
     }
     if (v <= 1) return (v != 0);
@@ -1576,25 +1567,104 @@ std::string GameLogic::get_held_weapon(ULONGLONG actor_ptr) const
 std::string GameLogic::get_weapon_name_from_id(long long id) {
     if (id == 0) return "";
     static const std::unordered_map<long long, const char*> weapon_map = {
-        {18010000017, "SG552"}, {18010000010, "AKS-74U"}, {18010000001, "M4A1"}, {18010000037, "AS-Val"},
-        {18010000031, "CAR-15"}, {18010000024, "PTR-32"}, {18010000023, "G3"}, {18010000021, "SCAR-H"},
-        {18010000018, "AK-12"}, {18010000016, "M7"}, {18010000015, "AUG"}, {18010000012, "ASh-12"},
-        {18010000008, "QBZ95-1"}, {18010000006, "AKM"}, {18010000014, "M16A4"}, {18010000013, "K416"},
-        {18010000038, "QBZ191"}, {18010000043, "MK47"},
-        {18020000004, "UZI"}, {18020000010, "MP7"}, {18020000009, u8"勇士"}, {18020000008, "SR-3M"},
-        {18020000006, "SMG-45"}, {18020000005, u8"野牛"}, {18020000003, "Vector"}, {18020000002, "P90"},
-        {18020000001, "MP5"}, {18020000011, "QCQ171"},
-        {18030000004, "M870"}, {18030000002, "S12K"}, {18030000001, "M1014"},
-        {18040000002, "M249"}, {18040000001, "PKM"}, {18040000003, "M250"}, {18040000004, "QJB201"},
-        {18050000031, "PSG-1"}, {18050000007, "SR-25"}, {18050000006, "SKS"}, {18050000005, "M14"},
-        {18050000004, "SVD"}, {18050000003, "VSS"}, {18050000002, "Mini-14"}, {18050000008, "SR9"},
-        {18050000032, u8"Marlin杠杆步枪"},
-        {18060000011, "AWM"}, {18060000009, "M700"}, {18060000008, "R93"}, {18060000007, "SV-98"},
-        {18070000010, "G17"}, {18070000006, "93R"}, {18070000005, "G18"}, {18070000004, u8"沙漠之鹰"},
-        {18070000003, u8"357左轮"}, {18070000002, "QSZ92G"}, {18070000033, "M1911"},
-        {18100000009, u8"小刀"}, {18100000011, u8"防爆盾"}, {18080000011, u8"虎蹲炮"}, {18080000010, u8"三联装手炮"},
-        {18070000030, u8"激素枪"}, {18130000002, u8"侦察箭矢"}, {18130000001, u8"电击箭矢"},
-        {21020300006, u8"声波陷阱"}, {21010000022, u8"破片手雷"}, {21020300007, u8"烟幕无人机"}, {21010000001, u8"增强型破片手雷"}
+        // 突击步枪
+        {18010000001, u8"M4A1"},
+        {18010000006, u8"AKM"},
+        {18010000008, u8"QBZ95-1"},
+        {18010000010, u8"AKS-74U"},
+        {18010000012, u8"ASh-12"},
+        {18010000013, u8"K416"},
+        {18010000014, u8"M16A4"},
+        {18010000015, u8"AUG"},
+        {18010000016, u8"M7"},
+        {18010000017, u8"SG552"},
+        {18010000018, u8"AK-12"},
+        {18010000021, u8"SCAR-H"},
+        {18010000023, u8"G3"},
+        {18010000024, u8"PTR-32"},
+        {18010000031, u8"CAR-15"},
+        {18010000037, u8"AS Val"},
+        {18010000038, u8"腾龙突击步枪"},
+        {18010000040, u8"K437"},
+        {18010000042, u8"KC17"},
+        {18010000043, u8"MK47"},
+
+        // 冲锋枪
+        {18020000001, u8"MP5"},
+        {18020000002, u8"P90"},
+        {18020000003, u8"Vector"},
+        {18020000004, u8"UZI"},
+        {18020000005, u8"野牛"},
+        {18020000006, u8"SMG-45"},
+        {18020000008, u8"SR-3M"},
+        {18020000009, u8"勇士"},
+        {18020000010, u8"MP7"},
+        {18020000011, u8"QCQ171"},
+        {18020000012, u8"MK4"},
+
+        // 霰弹枪
+        {18030000001, u8"M1014"},
+        {18030000002, u8"S12K"},
+        {18030000004, u8"M870"},
+        {18030000005, u8"725双管霰弹枪"},
+
+        // 机枪
+        {18040000001, u8"PKM"},
+        {18040000002, u8"M249"},
+        {18040000003, u8"M250"},
+        {18040000004, u8"QJB201"},
+
+        // 射手步枪
+        {18050000002, u8"Mini-14"},
+        {18050000003, u8"VSS"},
+        {18050000004, u8"SVD"},
+        {18050000005, u8"M14"},
+        {18050000006, u8"SKS"},
+        {18050000007, u8"SR-25"},
+        {18050000008, u8"SR9"},
+        {18050000031, u8"PSG-1"},
+        {18050000032, u8"Marlin"},
+
+        // 狙击步枪
+        {18060000007, u8"SV-98"},
+        {18060000008, u8"R93"},
+        {18060000009, u8"M700"},
+        {18060000011, u8"AWM"},
+
+        // 手枪
+        {18070000002, u8"QSZ92G"},
+        {18070000003, u8".357左轮"},
+        {18070000004, u8"沙漠之鹰"},
+        {18070000005, u8"G18"},
+        {18070000006, u8"93R"},
+        {18070000010, u8"G17"},
+        {18070000033, u8"M1911"},
+
+        // 特殊武器
+        {18150000001, u8"复合弓"},
+
+        // 近战武器
+        {18100000002, u8"默认刀"},
+        {18100000008, u8"赤枭"},
+        {18100000009, u8"黑鹰"},
+        {18100000010, u8"怜铭"},
+        {18100000011, u8"防爆盾"},
+        {18100000012, u8"影锋"},
+        {18100000014, u8"黑海"},
+        {18100000015, u8"北极星"},
+        {18100000017, u8"电锯"},
+        {18100000020, u8"信条"},
+
+        // 爆炸物/装备
+        {18080000010, u8"三联装手炮"},
+        {18080000011, u8"虎蹲炮"},
+        {18130000001, u8"电击箭矢"},
+        {18130000002, u8"侦察箭矢"},
+        {21010000001, u8"增强型破片手雷"},
+        {21010000022, u8"破片手雷"},
+        {21020300006, u8"声波陷阱"},
+        {21020300007, u8"烟幕无人机"},
+		{18070000030, u8"激素枪"},
     };
     auto it = weapon_map.find(id);
     return (it != weapon_map.end()) ? it->second : u8"未知武器";
@@ -1641,7 +1711,7 @@ void GameLogic::viewAndSelfUpdateLoop() {
         float current_fov = 90.0f;
 
         if (cached_player_controller_ptr && cached_view_matrix_final_ptr) {
-            my_pawn = read<ULONGLONG>(cached_player_controller_ptr + Offsets::LocalPlayerPtr_PawnOffset);
+            my_pawn = decrypt_shift(cached_player_controller_ptr + Offsets::LocalPlayerPtr_PawnOffset);
 
             if (my_pawn && is_in_match_check(my_pawn)) {
                 inMatch = true;
@@ -1729,14 +1799,14 @@ void GameLogic::viewAndSelfUpdateLoop() {
         if (!inMatch) {
             ULONGLONG lp1 = read<ULONGLONG>(baseAddress + Offsets::Uworld);
             if (lp1) {
-                ULONGLONG lp2 = decrypt_shift(lp1 + Offsets::OwningGameInstance); // 仍然需要调用
+                ULONGLONG lp2 = decrypt_shift(lp1 + Offsets::OwningGameInstance);
                 if (lp2) {
                     ULONGLONG lp3 = read<ULONGLONG>(lp2 + Offsets::LocalPlayers);
                     if (lp3) {
                         ULONGLONG lp4 = read<ULONGLONG>(lp3 + 0);  // TODO: 只读一遍
                         if (lp4) {
                             ULONGLONG player_controller = read<ULONGLONG>(lp4 + Offsets::PlayerController);
-                            my_pawn = read<ULONGLONG>(player_controller + Offsets::LocalPlayerPtr_PawnOffset);
+                            my_pawn = decrypt_shift(player_controller + Offsets::LocalPlayerPtr_PawnOffset);
 
                             if (my_pawn && is_in_match_check(my_pawn)) {
 
@@ -1798,7 +1868,7 @@ void GameLogic::viewAndSelfUpdateLoop() {
                                 }
 
                                 // 获取 MapID
-                                ULONGLONG ADFMGameState = read<ULONGLONG>(lp1 + Offsets::GameState);
+                                ULONGLONG ADFMGameState = decrypt_shift(lp1 + Offsets::GameState);
                                 if (ADFMGameState) {
                                     mapId = read<int>(ADFMGameState + Offsets::MapConfig + 0x10);
                                 }
@@ -1894,50 +1964,50 @@ bool GameLogic::read_is_firing_flag() const
 int get_bone_priority(BoneID bone_id) {
     switch (bone_id) {
         // 核心躯干 (高优先级)
-    case BoneID::Head:
-        return 0; // 最高优先级
-    case BoneID::Neck:
-        return 1;
-    case BoneID::Spine2: // 上胸部
-        return 2;
-    case BoneID::Spine1: // 胸部
-        return 2;
-    case BoneID::Spine:  // 下胸部/腹部
-        return 3;
-    case BoneID::Hips:   // 臀部/裆部
-        return 3;
+	    case BoneID::Head:
+	        return 0; // 最高优先级
+	    case BoneID::Neck:
+	        return 1;
+	    case BoneID::Spine2: // 上胸部
+	        return 2;
+	    case BoneID::Spine1: // 胸部
+	        return 2;
+	    case BoneID::Spine:  // 下胸部/腹部
+	        return 3;
+	    case BoneID::Hips:   // 臀部/裆部
+	        return 3;
 
-        // 四肢 (中优先级)
-    case BoneID::LeftShoulder:
-    case BoneID::RightShoulder:
-        return 4;
-    case BoneID::LeftUpLeg:
-    case BoneID::RightUpLeg:
-        return 4;
+    	// 四肢 (中优先级)
+	    case BoneID::LeftShoulder:
+	    case BoneID::RightShoulder:
+	        return 4;
+	    case BoneID::LeftUpLeg:
+	    case BoneID::RightUpLeg:
+	        return 4;
 
-        // 四肢末端 (低优先级)
-    case BoneID::LeftArm:
-    case BoneID::RightArm:
-        return 5;
-    case BoneID::LeftLeg:
-    case BoneID::RightLeg:
-        return 5;
-    case BoneID::LeftForeArm:
-    case BoneID::RightForeArm:
-        return 5;
+		// 四肢末端 (低优先级)
+	    case BoneID::LeftArm:
+	    case BoneID::RightArm:
+	        return 5;
+	    case BoneID::LeftLeg:
+	    case BoneID::RightLeg:
+	        return 5;
+	    case BoneID::LeftForeArm:
+	    case BoneID::RightForeArm:
+	        return 5;
 
-        // 手脚 (最低优先级)
-    case BoneID::LeftHand:
-    case BoneID::RightHand:
-    case BoneID::LeftFoot:
-    case BoneID::RightFoot:
-    case BoneID::LeftToeBase:
-    case BoneID::RightToeBase:
-        return 6;
+		// 手脚 (最低优先级)
+	    case BoneID::LeftHand:
+	    case BoneID::RightHand:
+	    case BoneID::LeftFoot:
+	    case BoneID::RightFoot:
+	    case BoneID::LeftToeBase:
+	    case BoneID::RightToeBase:
+	        return 6;
 
-        // 其他所有骨骼 (如 IK, 武器, 道具点)
-    default:
-        return 999;
+    	// 其他所有骨骼 (如 IK, 武器, 道具点)
+	    default:
+	        return 999;
     }
 }
 WeaponType get_weapon_type(long long weapon_id) {
@@ -2427,7 +2497,7 @@ void GameLogic::actorDiscoveryLoop() {
                         std::string name = get_item_display_name(s.item_component_ptr);
                         if (name.empty()) continue;
                         strncpy_s(pkt.name, name.c_str(), _TRUNCATE);
-                        pkt.price = read<int>(s.item_component_ptr + Offsets::ItemPrice);
+                        pkt.price = read<int>(s.item_component_ptr + Offsets::InitialGuidePrice);
                         pkt.quality = read<int>(s.item_component_ptr + Offsets::Quality);
                         pkt.world_location = { s.location.x, s.location.y, s.location.z };
                         networkServer.send_packet(&pkt, sizeof(pkt));
@@ -2743,7 +2813,7 @@ void GameLogic::actorDiscoveryLoop() {
 
                     if (byType == StaticClass::Item || class_name.find("InventoryPickup") != std::string::npos) {
                         s.cls = StaticClass::Item;
-                        s.item_component_ptr = read<ULONGLONG>(actor_ptr + Offsets::ItemComponent);
+                        s.item_component_ptr = read<ULONGLONG>(actor_ptr + Offsets::FDFMCommonItemRow);
                         if (s.item_component_ptr) should_process_static = true;
                     }
                     else if (match_container_keywords(class_name) || byType == StaticClass::Container || byType == StaticClass::Safe) {
@@ -2762,7 +2832,7 @@ void GameLogic::actorDiscoveryLoop() {
                         std::string name = get_item_display_name(s.item_component_ptr);
                         if (name.empty()) continue;
                         strncpy_s(pkt.name, name.c_str(), _TRUNCATE);
-                        pkt.price = read<int>(s.item_component_ptr + Offsets::ItemPrice);
+                        pkt.price = read<int>(s.item_component_ptr + Offsets::InitialGuidePrice);
                         pkt.quality = read<int>(s.item_component_ptr + Offsets::Quality);
                         pkt.world_location = { s.location.x, s.location.y, s.location.z };
                         networkServer.send_packet(&pkt, sizeof(pkt));
