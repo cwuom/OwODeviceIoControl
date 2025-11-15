@@ -16,6 +16,7 @@ Release.7z
 *.ipdb
 *.recipe
 *.lastbuildstate
+*.7z
 unsuccessfulbuild
 vc143.idb
 vc143.pdb
