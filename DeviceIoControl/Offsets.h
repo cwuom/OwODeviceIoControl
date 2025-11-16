@@ -148,7 +148,7 @@ namespace Offsets
 
 	// ---------------------------- 尸体盒子 ----------------------------
 	// AInventoryPickup_DeadBody 相关
-	constexpr ULONG64 OwnerPlayerState = 0x1F70;                // class AInventoryPickup_DeadBody : public AInventoryPickup_Container -> APlayerState*
+	constexpr ULONG64 OwnerPlayerState = 0x2298;                // class AInventoryPickup_DeadBody : public AInventoryPickup_Container -> APlayerState*
 	constexpr ULONG64 bLooted = 0x2290;                         // class AInventoryPickup_DeadBody : public AInventoryPickup_Container -> bLooted
 
 	// ---------------------------- 人机系统 ----------------------------
