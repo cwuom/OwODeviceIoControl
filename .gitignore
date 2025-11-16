@@ -29,3 +29,4 @@ Physx 4.1/lib/
 *.pdb
 *.exe
 *.obj
+/bfg.jar
