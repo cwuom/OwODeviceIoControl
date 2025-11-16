@@ -103,76 +103,76 @@ uintptr_t GameLogic::TranslateRemotePointer(uintptr_t remotePtr) const
 
 uintptr_t GameLogic::GetRegisterValue(PCONTEXT context, ZydisRegister reg) {
     switch (reg) {
-    case ZYDIS_REGISTER_RAX: return context->Rax;
-    case ZYDIS_REGISTER_RBX: return context->Rbx;
-    case ZYDIS_REGISTER_RCX: return context->Rcx;
-    case ZYDIS_REGISTER_RDX: return context->Rdx;
-    case ZYDIS_REGISTER_RSI: return context->Rsi;
-    case ZYDIS_REGISTER_RDI: return context->Rdi;
-    case ZYDIS_REGISTER_RBP: return context->Rbp;
-    case ZYDIS_REGISTER_RSP: return context->Rsp;
-    case ZYDIS_REGISTER_R8:  return context->R8;
-    case ZYDIS_REGISTER_R9:  return context->R9;
-    case ZYDIS_REGISTER_R10: return context->R10;
-    case ZYDIS_REGISTER_R11: return context->R11;
-    case ZYDIS_REGISTER_R12: return context->R12;
-    case ZYDIS_REGISTER_R13: return context->R13;
-    case ZYDIS_REGISTER_R14: return context->R14;
-    case ZYDIS_REGISTER_R15: return context->R15;
-    case ZYDIS_REGISTER_EAX: return context->Rax & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_EBX: return context->Rbx & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_ECX: return context->Rcx & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_EDX: return context->Rdx & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_ESI: return context->Rsi & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_EDI: return context->Rdi & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_EBP: return context->Rbp & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_ESP: return context->Rsp & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R8D: return context->R8 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R9D: return context->R9 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R10D: return context->R10 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R11D: return context->R11 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R12D: return context->R12 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R13D: return context->R13 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R14D: return context->R14 & 0xFFFFFFFF;
-    case ZYDIS_REGISTER_R15D: return context->R15 & 0xFFFFFFFF;
-    default: return 0;
+	    case ZYDIS_REGISTER_RAX: return context->Rax;
+	    case ZYDIS_REGISTER_RBX: return context->Rbx;
+	    case ZYDIS_REGISTER_RCX: return context->Rcx;
+	    case ZYDIS_REGISTER_RDX: return context->Rdx;
+	    case ZYDIS_REGISTER_RSI: return context->Rsi;
+	    case ZYDIS_REGISTER_RDI: return context->Rdi;
+	    case ZYDIS_REGISTER_RBP: return context->Rbp;
+	    case ZYDIS_REGISTER_RSP: return context->Rsp;
+	    case ZYDIS_REGISTER_R8:  return context->R8;
+	    case ZYDIS_REGISTER_R9:  return context->R9;
+	    case ZYDIS_REGISTER_R10: return context->R10;
+	    case ZYDIS_REGISTER_R11: return context->R11;
+	    case ZYDIS_REGISTER_R12: return context->R12;
+	    case ZYDIS_REGISTER_R13: return context->R13;
+	    case ZYDIS_REGISTER_R14: return context->R14;
+	    case ZYDIS_REGISTER_R15: return context->R15;
+	    case ZYDIS_REGISTER_EAX: return context->Rax & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_EBX: return context->Rbx & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_ECX: return context->Rcx & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_EDX: return context->Rdx & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_ESI: return context->Rsi & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_EDI: return context->Rdi & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_EBP: return context->Rbp & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_ESP: return context->Rsp & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R8D: return context->R8 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R9D: return context->R9 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R10D: return context->R10 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R11D: return context->R11 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R12D: return context->R12 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R13D: return context->R13 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R14D: return context->R14 & 0xFFFFFFFF;
+	    case ZYDIS_REGISTER_R15D: return context->R15 & 0xFFFFFFFF;
+	    default: return 0;
     }
 }
 
 void GameLogic::SetRegisterValue(PCONTEXT context, ZydisRegister reg, uintptr_t value) {
     switch (reg) {
-    case ZYDIS_REGISTER_RAX: context->Rax = value; break;
-    case ZYDIS_REGISTER_RBX: context->Rbx = value; break;
-    case ZYDIS_REGISTER_RCX: context->Rcx = value; break;
-    case ZYDIS_REGISTER_RDX: context->Rdx = value; break;
-    case ZYDIS_REGISTER_RSI: context->Rsi = value; break;
-    case ZYDIS_REGISTER_RDI: context->Rdi = value; break;
-    case ZYDIS_REGISTER_RBP: context->Rbp = value; break;
-    case ZYDIS_REGISTER_RSP: context->Rsp = value; break;
-    case ZYDIS_REGISTER_R8:  context->R8 = value; break;
-    case ZYDIS_REGISTER_R9:  context->R9 = value; break;
-    case ZYDIS_REGISTER_R10: context->R10 = value; break;
-    case ZYDIS_REGISTER_R11: context->R11 = value; break;
-    case ZYDIS_REGISTER_R12: context->R12 = value; break;
-    case ZYDIS_REGISTER_R13: context->R13 = value; break;
-    case ZYDIS_REGISTER_R14: context->R14 = value; break;
-    case ZYDIS_REGISTER_R15: context->R15 = value; break;
-    case ZYDIS_REGISTER_EAX: context->Rax = (context->Rax & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_EBX: context->Rbx = (context->Rbx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_ECX: context->Rcx = (context->Rcx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_EDX: context->Rdx = (context->Rdx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_ESI: context->Rsi = (context->Rsi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_EDI: context->Rdi = (context->Rdi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_EBP: context->Rbp = (context->Rbp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_ESP: context->Rsp = (context->Rsp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R8D: context->R8 = (context->R8 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R9D: context->R9 = (context->R9 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R10D: context->R10 = (context->R10 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R11D: context->R11 = (context->R11 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R12D: context->R12 = (context->R12 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R13D: context->R13 = (context->R13 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R14D: context->R14 = (context->R14 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
-    case ZYDIS_REGISTER_R15D: context->R15 = (context->R15 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_RAX: context->Rax = value; break;
+	    case ZYDIS_REGISTER_RBX: context->Rbx = value; break;
+	    case ZYDIS_REGISTER_RCX: context->Rcx = value; break;
+	    case ZYDIS_REGISTER_RDX: context->Rdx = value; break;
+	    case ZYDIS_REGISTER_RSI: context->Rsi = value; break;
+	    case ZYDIS_REGISTER_RDI: context->Rdi = value; break;
+	    case ZYDIS_REGISTER_RBP: context->Rbp = value; break;
+	    case ZYDIS_REGISTER_RSP: context->Rsp = value; break;
+	    case ZYDIS_REGISTER_R8:  context->R8 = value; break;
+	    case ZYDIS_REGISTER_R9:  context->R9 = value; break;
+	    case ZYDIS_REGISTER_R10: context->R10 = value; break;
+	    case ZYDIS_REGISTER_R11: context->R11 = value; break;
+	    case ZYDIS_REGISTER_R12: context->R12 = value; break;
+	    case ZYDIS_REGISTER_R13: context->R13 = value; break;
+	    case ZYDIS_REGISTER_R14: context->R14 = value; break;
+	    case ZYDIS_REGISTER_R15: context->R15 = value; break;
+	    case ZYDIS_REGISTER_EAX: context->Rax = (context->Rax & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_EBX: context->Rbx = (context->Rbx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_ECX: context->Rcx = (context->Rcx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_EDX: context->Rdx = (context->Rdx & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_ESI: context->Rsi = (context->Rsi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_EDI: context->Rdi = (context->Rdi & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_EBP: context->Rbp = (context->Rbp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_ESP: context->Rsp = (context->Rsp & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R8D: context->R8 = (context->R8 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R9D: context->R9 = (context->R9 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R10D: context->R10 = (context->R10 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R11D: context->R11 = (context->R11 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R12D: context->R12 = (context->R12 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R13D: context->R13 = (context->R13 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R14D: context->R14 = (context->R14 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
+	    case ZYDIS_REGISTER_R15D: context->R15 = (context->R15 & 0xFFFFFFFF00000000) | (value & 0xFFFFFFFF); break;
     default: break;
     }
 }
@@ -491,7 +491,7 @@ bool GameLogic::FixBaseDisplacementMemoryAccess(PCONTEXT context, uintptr_t valu
         return true;
     }
 
-    std::cout << u8"不支持的指令: " << ZydisMnemonicGetString(instruction.mnemonic) << std::endl;
+    std::cout << u8"VEH: Unsupported instructions: " << ZydisMnemonicGetString(instruction.mnemonic) << std::endl;
     return false;
 }
 
@@ -601,7 +601,7 @@ LONG WINAPI GameLogic::VectoredExceptionHandler(PEXCEPTION_POINTERS ExceptionInf
     }
     else
     {
-        // 模拟失败（例如，不支持的指令）
+        // 模拟失败（例如，VEH: Unsupported instructions）
         printf("VEH: FixBase FAILED (Instruction at 0x%p not supported?).\n", (void*)context->Rip);
         // 让 __except 块来捕获
         return EXCEPTION_CONTINUE_SEARCH;
@@ -890,7 +890,7 @@ void GameLogic::mapModelLoop() {
         if (mapName == "Tidal Prison")  return "LModes/chaoxijianyu";
         // Lobby 或未知地图不加载
         return "";
-        };
+    };
 
     auto safeGetMTime = [](const std::string& p) -> std::optional<fs::file_time_type> {
         try {
@@ -901,7 +901,7 @@ void GameLogic::mapModelLoop() {
         catch (...) {
             return std::nullopt;
         }
-        };
+    };
 
     while (running) {
         bool inMatch = false;
@@ -910,24 +910,24 @@ void GameLogic::mapModelLoop() {
             inMatch = sharedData.is_in_match;
         }
 
-        if (!inMatch) {
-            // 刚刚离开比赛：清理状态
-            if (lastInMatch) {
-                std::cout << "[PhysX] Left match. Unloading map model..." << std::endl;
-                RTModel::DelModel();
-                RTModel::Init();
-                mapLoaded = false;
-                lastMapName.clear();
-                currentMapName.clear();
-                retryCount = 0;
-                loadedModelMTime = {};
-            }
-            lastInMatch = false;
-            std::this_thread::sleep_for(1s);
-            continue;
-        }
+        //if (!inMatch) {
+        //    // 刚刚离开比赛：清理状态
+        //    if (lastInMatch) {
+        //        std::cout << "[PhysX] Left match. Unloading map model..." << std::endl;
+        //        RTModel::DelModel();
+        //        RTModel::Init();
+        //        mapLoaded = false;
+        //        lastMapName.clear();
+        //        currentMapName.clear();
+        //        retryCount = 0;
+        //        loadedModelMTime = {};
+        //    }
+        //    lastInMatch = false;
+        //    std::this_thread::sleep_for(1s);
+        //    continue;
+        //}
 
-        lastInMatch = true;
+        //lastInMatch = true;
 
         // 识别当前地图
         ULONGLONG uworld = read<ULONGLONG>(baseAddress + Offsets::Uworld);
@@ -957,9 +957,20 @@ void GameLogic::mapModelLoop() {
 
         // Lobby 或未知地图：不加载，稍后再看
         if (modelPath.empty()) {
+            is_in_lobby = true;
+            //std::cout << "[PhysX] Left match. Unloading map model..." << std::endl;
+            RTModel::DelModel();
+            RTModel::Init();
+            mapLoaded = false;
+            lastMapName.clear();
+            currentMapName.clear();
+            retryCount = 0;
+            loadedModelMTime = {};
             std::this_thread::sleep_for(500ms);
             continue;
         }
+
+        is_in_lobby = false;
 
         // 文件热重载：检测模型文件时间戳是否变化
         if (enableFileHotReload && mapLoaded) {
@@ -1225,16 +1236,16 @@ USHORT GameLogic::calculate_xor_key1(int name_length) {
     USHORT xor_key;
     constexpr int key1 = 31, key2 = 223, key3 = 207, key4 = 12, key5 = 64, key6 = 128, key7 = 127;
     switch (name_length % 9) {
-    case 0: xor_key = (name_length + (name_length & key1) + key6) | key7; break;
-    case 1: xor_key = (name_length + (name_length ^ key2) + key6) | key7; break;
-    case 2: xor_key = (name_length + (name_length | key3) + key6) | key7; break;
-    case 3: xor_key = (33 * name_length + key6) | key7; break;
-    case 4: xor_key = (name_length + (name_length >> 2) + key6) | key7; break;
-    case 5: xor_key = (3 * name_length + 133) | key7; break;
-    case 6: xor_key = (name_length + ((4 * name_length) | 5) + key6) | key7; break;
-    case 7: xor_key = (name_length + ((name_length >> 4) | 7) + key6) | key7; break;
-    case 8: xor_key = (name_length + (name_length ^ key4) + key6) | key7; break;
-    default: xor_key = (name_length + (name_length ^ key5) + key6) | key7; break;
+	    case 0: xor_key = (name_length + (name_length & key1) + key6) | key7; break;
+	    case 1: xor_key = (name_length + (name_length ^ key2) + key6) | key7; break;
+	    case 2: xor_key = (name_length + (name_length | key3) + key6) | key7; break;
+	    case 3: xor_key = (33 * name_length + key6) | key7; break;
+	    case 4: xor_key = (name_length + (name_length >> 2) + key6) | key7; break;
+	    case 5: xor_key = (3 * name_length + 133) | key7; break;
+	    case 6: xor_key = (name_length + ((4 * name_length) | 5) + key6) | key7; break;
+	    case 7: xor_key = (name_length + ((name_length >> 4) | 7) + key6) | key7; break;
+	    case 8: xor_key = (name_length + (name_length ^ key4) + key6) | key7; break;
+	    default: xor_key = (name_length + (name_length ^ key5) + key6) | key7; break;
     }
     return xor_key;
 }
@@ -1270,12 +1281,10 @@ std::string GameLogic::resolve_name_internal(int key) const
         WideCharToMultiByte(CP_UTF8, 0, w.c_str(), -1, narrow, sizeof(narrow) - 1, NULL, NULL);
         return std::string(narrow);
     }
-    else {
-        std::vector<char> buffer(name_length + 1, 0);
-        if (!read_bytes(name_entry_address + 2, buffer.data(), name_length)) return "";
-        for (int i = 0; i < name_length; ++i) buffer[i] ^= static_cast<char>(xor_key & 0xFF);
-        return std::string(buffer.data());
-    }
+    std::vector<char> buffer(name_length + 1, 0);
+    if (!read_bytes(name_entry_address + 2, buffer.data(), name_length)) return "";
+    for (int i = 0; i < name_length; ++i) buffer[i] ^= static_cast<char>(xor_key & 0xFF);
+    return std::string(buffer.data());
 }
 
 std::string GameLogic::get_name_fast(int key) {
@@ -1416,11 +1425,11 @@ bool GameLogic::is_dead_body_class(const std::string& name) {
 
 StaticClass GameLogic::classify_by_marking_type(BYTE t) {
     switch (t) {
-    case 1: return StaticClass::HackerPC;
-    case 2: return StaticClass::Item;
-    case 3: return StaticClass::Container;
-    case 4: return StaticClass::Safe;
-    default: return StaticClass::Unknown;
+	    case 1: return StaticClass::HackerPC;
+	    case 2: return StaticClass::Item;
+	    case 3: return StaticClass::Container;
+	    case 4: return StaticClass::Safe;
+	    default: return StaticClass::Unknown;
     }
 }
 
@@ -1428,20 +1437,20 @@ std::string GameLogic::get_ai_type(ULONGLONG actor_ptr) const {
     ULONGLONG tag_ptr = read<ULONGLONG>(actor_ptr + Offsets::AICharacterTag);
     BYTE index = read<BYTE>(tag_ptr);
     switch (index) {
-    case 0:  return u8"假人";
-    case 1:  return u8"盾兵";
-    case 2:  return u8"步兵";
-    case 3:  return u8"狙击兵";
-    case 4:  return u8"护盾兵";
-    case 5:  return u8"机枪兵";
-    case 6:  return u8"空降兵";
-    case 8:  return u8"喷火兵";
-    case 9:  return u8"火箭兵";
-    case 10: return u8"BOSS";
-    case 11: return u8"BoyBand";
-    case 12: return u8"鳄鱼";
-    case 13: return u8"非人类";
-    default: return u8"未知AI(" + std::to_string(index) + ")";
+	    case 0:  return u8"假人";
+	    case 1:  return u8"盾兵";
+	    case 2:  return u8"步兵";
+	    case 3:  return u8"狙击兵";
+	    case 4:  return u8"护盾兵";
+	    case 5:  return u8"机枪兵";
+	    case 6:  return u8"空降兵";
+	    case 8:  return u8"喷火兵";
+	    case 9:  return u8"火箭兵";
+	    case 10: return u8"BOSS";
+	    case 11: return u8"BoyBand";
+	    case 12: return u8"鳄鱼";
+	    case 13: return u8"非人类";
+	    default: return u8"未知AI(" + std::to_string(index) + ")";
     }
 }
 
@@ -1450,19 +1459,19 @@ std::string GameLogic::get_operator_name(ULONGLONG player_state_ptr) const
     if (player_state_ptr > 0) {
         BYTE id = read<BYTE>(player_state_ptr + Offsets::HeroID);
         switch (id) {
-        case 30: return u8"红狼";
-        case 25: return u8"威龙";
-        case 27: return u8"蜂医";
-        case 29: return u8"牧羊人";
-        case 35: return u8"乌鲁鲁";
-        case 28: return u8"露娜";
-        case 26: return u8"骇爪";
-        case 36: return u8"蛊";
-        case 37: return u8"深蓝";
-        case 38: return u8"无名";
-        case 39: return u8"疾风";
-        case 40: return u8"银翼";
-        default: return u8"干员(" + std::to_string(id) + ")";
+	        case 30: return u8"红狼";
+	        case 25: return u8"威龙";
+	        case 27: return u8"蜂医";
+	        case 29: return u8"牧羊人";
+	        case 35: return u8"乌鲁鲁";
+	        case 28: return u8"露娜";
+	        case 26: return u8"骇爪";
+	        case 36: return u8"蛊";
+	        case 37: return u8"深蓝";
+	        case 38: return u8"无名";
+	        case 39: return u8"疾风";
+	        case 40: return u8"银翼";
+	        default: return u8"干员(" + std::to_string(id) + ")";
         }
     }
     return u8"获取失败";
@@ -1477,6 +1486,7 @@ std::string GameLogic::get_item_display_name(const ULONGLONG item_component_ptr)
     if (!t2) return "";
     ULONGLONG t3 = read<ULONGLONG>(t2 + Offsets::ItemName_2);
     if (!t3) return "";
+
     ULONGLONG displayNamePtr = read<ULONGLONG>(t3 + Offsets::ItemName_3);
     if (!displayNamePtr) return "";
 
@@ -1697,49 +1707,137 @@ void GameLogic::clear_console() {
     SetConsoleCursorPosition(console, topLeft);
 }
 
+/**
+ * @brief 当检测到新的Pawn指针时, 重新缓存所有相关的半静态指针
+ * @param current_pawn_ptr 刚刚找到的新的Pawn指针
+ * @param player_controller 与该Pawn关联的PlayerController
+ * @return 缓存是否成功
+ */
+bool GameLogic::re_cache_all_pointers(ULONGLONG current_pawn_ptr, ULONGLONG player_controller)
+{
+    std::cout << "[ViewLoop] New Pawn detected (0x" << std::hex << current_pawn_ptr
+        << "). Re-caching all pointers..." << std::dec << std::endl;
+
+    // 缓存Pawn、Controller、RootComponent
+    cached_player_controller_ptr = player_controller;
+    cached_my_root_component_ptr = decrypt_shift(current_pawn_ptr + Offsets::RootComponent);
+    if (!cached_my_root_component_ptr) {
+        std::cerr << "[ViewLoop] Re-cache FAILED: Could not get RootComponent." << std::endl;
+        return false;
+    }
+
+    // 缓存 PlayerState 和 TeamID
+    cached_my_player_state_ptr = read<ULONGLONG>(current_pawn_ptr + Offsets::PlayerState);
+    if (cached_my_player_state_ptr) {
+        int t0 = read<int>(cached_my_player_state_ptr + Offsets::TeamID);
+        int t4 = read<int>(cached_my_player_state_ptr + Offsets::TeamID + 4);
+        auto plausible = [](int v) { return v > 0 && v < 64; };
+        teamIdDelta = (plausible(t4) && !plausible(t0)) ? 4 : 0;
+        cached_my_team_id = read<int>(cached_my_player_state_ptr + Offsets::TeamID + teamIdDelta);
+    }
+    else {
+        std::cerr << "[ViewLoop] Re-cache Warning: Could not get PlayerState." << std::endl;
+        cached_my_team_id = -1; // 标记为未知
+    }
+
+    // 缓存 GameState 和 MapID
+    cached_gamestate_ptr = decrypt_shift(cached_uworld_ptr + Offsets::GameState);
+    if (cached_gamestate_ptr) {
+        cached_map_id = read<int>(cached_gamestate_ptr + Offsets::MapConfig + 0x10);
+    }
+    else {
+        std::cerr << "[ViewLoop] Re-cache Warning: Could not get GameState." << std::endl;
+        cached_map_id = 0;
+    }
+
+    // 缓存视图矩阵指针
+    ULONGLONG vmb = read<ULONGLONG>(baseAddress + Offsets::ViewMatrix_Base);
+    if (vmb) {
+        ULONGLONG mp = read<ULONGLONG>(vmb + Offsets::ViewMatrix_Offset1) + Offsets::ViewMatrix_Offset2;
+        if (mp) {
+            cached_view_matrix_final_ptr = mp;
+        }
+    }
+    if (!cached_view_matrix_final_ptr) {
+        std::cerr << "[ViewLoop] Re-cache FAILED: Could not find ViewMatrix pointer." << std::endl;
+        return false;
+    }
+
+    // 重新获取地图对象
+    get_map_object(cached_player_controller_ptr);
+
+    std::cout << "[ViewLoop] Re-cache complete." << std::endl;
+    return true;
+}
+
 void GameLogic::viewAndSelfUpdateLoop() {
     while (running) {
         DirectX::XMFLOAT4X4 vm{};
         Vector3 myLoc{ 0,0,0 };
+        float myYaw = 0.f;
         int myTeam = -1;
-        bool inMatch = false;
-        ULONGLONG my_pawn = 0;
+        int mapId = 0;
         bool isMapOpen = false;
         Mapinfo mapInfo{};
-        float myYaw = 0.f;
-        int mapId = 0;
         float current_fov = 90.0f;
 
-        if (cached_player_controller_ptr && cached_view_matrix_final_ptr) {
-            my_pawn = decrypt_shift(cached_player_controller_ptr + Offsets::LocalPlayerPtr_PawnOffset);
+        bool inMatch = false; // 默认不在
+        ULONGLONG current_pawn_ptr = 0;
+        ULONGLONG player_controller_ptr = 0;
 
-            if (my_pawn && is_in_match_check(my_pawn)) {
-                inMatch = true;
-
-                if (cached_my_root_component_ptr == 0) {
-                    // 仅在缓存为空时调用一次解密
-                    cached_my_root_component_ptr = decrypt_shift(my_pawn + Offsets::RootComponent);
-                    if (cached_my_root_component_ptr == 0) {
-                        std::cerr << "[ViewLoop] Failed to get my root component, retrying next frame..." << std::endl;
-                    }
+        // 这一步非常快, 因为它们只在程序启动/退出时变化
+        if (cached_uworld_ptr == 0) {
+            cached_uworld_ptr = read<ULONGLONG>(baseAddress + Offsets::Uworld);
+        }
+        if (cached_local_player_ptr == 0 && cached_uworld_ptr) {
+            ULONGLONG lp2 = decrypt_shift(cached_uworld_ptr + Offsets::OwningGameInstance);
+            if (lp2) {
+                ULONGLONG lp3 = read<ULONGLONG>(lp2 + Offsets::LocalPlayers);
+                if (lp3) {
+                    cached_local_player_ptr = read<ULONGLONG>(lp3 + 0); // 缓存 lp4
                 }
+            }
+        }
 
-                if (cached_my_root_component_ptr) {
-                    // read_enc_location 接受的就是 root_comp_ptr
-                    myLoc = read_enc_location(cached_my_root_component_ptr);
-                    // 使用新的辅助函数
-                    myYaw = get_my_yaw_from_root(cached_my_root_component_ptr);
-                }
-                else {
-                    // 如果 root_component_ptr 获取失败，则回退
-                    myLoc = { 0,0,0 };
-                    myYaw = 0.f;
-                }
+        // 如果连 LocalPlayer 都没有, 绝对不在游戏里, 直接跳过
+        if (!cached_local_player_ptr) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
 
+        player_controller_ptr = read<ULONGLONG>(cached_local_player_ptr + Offsets::PlayerController);
+        if (player_controller_ptr) {
+            // 这是本循环中唯一的昂贵解密, 用以追踪Pawn的真实状态
+            current_pawn_ptr = decrypt_shift(player_controller_ptr + Offsets::LocalPlayerPtr_PawnOffset);
+        }
+
+        if (current_pawn_ptr && is_in_match_check(current_pawn_ptr))
+        {
+            inMatch = true;
+            ULONGLONG last_known_pawn = 0;
+            {
+                std::shared_lock lk(sharedData.mutex);
+                last_known_pawn = sharedData.my_pawn_ptr; // 获取上一帧的Pawn
+            }
+
+            if (current_pawn_ptr != last_known_pawn) {
+                // 是新的! 立即重新缓存所有依赖指针
+                if (!re_cache_all_pointers(current_pawn_ptr, player_controller_ptr)) {
+                    inMatch = false; // 暂时标记为 inMatch=false
+                    goto UpdateSharedData; // 跳转到步骤 5
+                }
+            }
+
+            // 我们可以安全地从缓存中读取数据
+            if (cached_my_root_component_ptr && cached_view_matrix_final_ptr) {
+                myLoc = read_enc_location(cached_my_root_component_ptr);
+                myYaw = get_my_yaw_from_root(cached_my_root_component_ptr);
                 read_bytes(cached_view_matrix_final_ptr, &vm, sizeof(vm));
-                ULONGLONG my_ps = read<ULONGLONG>(my_pawn + Offsets::PlayerState);
-                if (my_ps) myTeam = read<int>(my_ps + Offsets::TeamID + teamIdDelta);
 
+                myTeam = cached_my_team_id;
+                mapId = cached_map_id;
+
+                // 计算 FOV
                 if (g_game_height > 0) {
                     float p_22 = vm._22;
                     if (p_22 > 0.001f) {
@@ -1747,144 +1845,75 @@ void GameLogic::viewAndSelfUpdateLoop() {
                         float aspect_ratio = static_cast<float>(g_game_width) / static_cast<float>(g_game_height);
                         float hfov_rad = 2.0f * std::atan(std::tan(vfov_rad / 2.0f) * aspect_ratio);
                         current_fov = DirectX::XMConvertToDegrees(hfov_rad);
-
-                        // 约束到一个合理的范围，防止矩阵变换导致异常值
-                        if (current_fov < 50.0f || current_fov > 150.0f) {
-                            current_fov = 90.0f;
-                        }
+                        if (current_fov < 50.0f || current_fov > 150.0f) current_fov = 90.0f;
                     }
-                    else {
-                        current_fov = 90.0f;
-                    }
+                    else { current_fov = 90.0f; }
                 }
-                else {
-                    current_fov = 90.0f;
-                }
+                else { current_fov = 90.0f; }
 
-                // 读取地图信息
-                if (mapObjPtr == 0) {
-                    get_map_object(cached_player_controller_ptr);
-                }
-
-                if (mapObjPtr != 0) {
+                // 读取地图UI
+                if (mapObjPtr) {
                     isMapOpen = read<char>(mapObjPtr + Offsets::preShouldDrawOffset) != 0;
                     mapInfo = read<Mapinfo>(mapObjPtr + Offsets::MapinfoOffset);
                 }
-
-                // myYaw 已在上面通过 get_my_yaw_from_root 获取
-
-                // 读取 MapId
-                ULONGLONG uworld_ptr = read<ULONGLONG>(baseAddress + Offsets::Uworld);
-                if (uworld_ptr) {
-                    ULONGLONG ADFMGameState = read<ULONGLONG>(uworld_ptr + Offsets::GameState);
-                    if (ADFMGameState) {
-                        mapId = read<int>(ADFMGameState + Offsets::MapConfig + 0x10);
-                    }
-                }
             }
             else {
-                if (cached_my_root_component_ptr != 0) {
-                    // 仅当我们确实在对局中时才打印
-                    std::cout << "[ViewLoop] Left match. Clearing root component cache." << std::endl;
+                // 走到这里说明 re_cache 失败了, 或者Pawn刚变指针还没跟上
+                inMatch = false;
+                if (g_cfg.debug.load()) {
+                    std::cout << "[ViewLoop] Warning: Pawn valid, but cached pointers (Root/View) are NULL. Waiting for re-cache." << std::endl;
                 }
+            }
+        }
+        else
+        {
+            inMatch = false;
+
+            // 检查上一帧是否在对局中
+            bool was_in_match = false;
+            {
+                std::shared_lock lk(sharedData.mutex);
+                was_in_match = sharedData.is_in_match;
+            }
+
+            if (was_in_match) {
+                // 刚刚退出对局! 清空所有缓存
+                std::cout << "[ViewLoop] Left match. Clearing all caches." << std::endl;
+                cached_uworld_ptr = 0;
+                cached_local_player_ptr = 0;
                 cached_player_controller_ptr = 0;
                 cached_view_matrix_final_ptr = 0;
-                cached_my_root_component_ptr = 0; // 清空自己的root
-                inMatch = false;
-                mapObjPtr = 0; // 退出对局时重置
+                cached_my_root_component_ptr = 0;
+                cached_gamestate_ptr = 0;
+                cached_my_player_state_ptr = 0;
+                cached_my_team_id = -1;
+                cached_map_id = 0;
+                mapObjPtr = 0;
                 miniMapObjPtr = 0;
             }
         }
 
-        if (!inMatch) {
-            ULONGLONG lp1 = read<ULONGLONG>(baseAddress + Offsets::Uworld);
-            if (lp1) {
-                ULONGLONG lp2 = decrypt_shift(lp1 + Offsets::OwningGameInstance);
-                if (lp2) {
-                    ULONGLONG lp3 = read<ULONGLONG>(lp2 + Offsets::LocalPlayers);
-                    if (lp3) {
-                        ULONGLONG lp4 = read<ULONGLONG>(lp3 + 0);  // TODO: 只读一遍
-                        if (lp4) {
-                            ULONGLONG player_controller = read<ULONGLONG>(lp4 + Offsets::PlayerController);
-                            my_pawn = decrypt_shift(player_controller + Offsets::LocalPlayerPtr_PawnOffset);
-
-                            if (my_pawn && is_in_match_check(my_pawn)) {
-
-                                // 刚找到Pawn，立即缓存所有指针
-                                inMatch = true;
-                                cached_player_controller_ptr = player_controller;
-
-                                // 查找 ViewMatrix
-                                ULONGLONG vmb = read<ULONGLONG>(baseAddress + Offsets::ViewMatrix_Base);
-                                if (vmb) {
-                                    ULONGLONG mp = read<ULONGLONG>(vmb + Offsets::ViewMatrix_Offset1) + Offsets::ViewMatrix_Offset2;
-                                    if (mp) {
-                                        cached_view_matrix_final_ptr = mp;
-                                        read_bytes(cached_view_matrix_final_ptr, &vm, sizeof(vm));
-                                    }
-                                }
-
-                                // 计算 FOV
-                                float p_22 = vm._22;
-                                if (p_22 > 0.001f && g_game_height > 0) {
-                                    float vfov_rad = 2.0f * std::atan(1.0f / p_22);
-                                    float aspect_ratio = static_cast<float>(g_game_width) / static_cast<float>(g_game_height);
-                                    float hfov_rad = 2.0f * std::atan(std::tan(vfov_rad / 2.0f) * aspect_ratio);
-                                    current_fov = DirectX::XMConvertToDegrees(hfov_rad);
-                                    if (current_fov < 50.0f || current_fov > 150.0f) {
-                                        current_fov = 90.0f;
-                                    }
-                                }
-                                else {
-                                    current_fov = 90.0f;
-                                }
-
-                                cached_my_root_component_ptr = decrypt_shift(my_pawn + Offsets::RootComponent);
-                                if (cached_my_root_component_ptr) {
-                                    myLoc = read_enc_location(cached_my_root_component_ptr);
-                                    myYaw = get_my_yaw_from_root(cached_my_root_component_ptr);
-                                }
-                                else {
-                                    std::cerr << "[ViewLoop] Failed to get my root component on match entry." << std::endl;
-                                    myLoc = { 0,0,0 };
-                                    myYaw = 0.f;
-                                }
-
-                                // 获取 TeamID
-                                ULONGLONG my_ps = read<ULONGLONG>(my_pawn + Offsets::PlayerState);
-                                if (my_ps) {
-                                    int t0 = read<int>(my_ps + Offsets::TeamID);
-                                    int t4 = read<int>(my_ps + Offsets::TeamID + 4);
-                                    auto plausible = [](int v) { return v > 0 && v < 64; };
-                                    teamIdDelta = (plausible(t4) && !plausible(t0)) ? 4 : 0;
-                                    myTeam = read<int>(my_ps + Offsets::TeamID + teamIdDelta);
-                                }
-
-                                // 获取地图对象
-                                get_map_object(cached_player_controller_ptr);
-                                if (mapObjPtr != 0) {
-                                    isMapOpen = read<char>(mapObjPtr + Offsets::preShouldDrawOffset) != 0;
-                                    mapInfo = read<Mapinfo>(mapObjPtr + Offsets::MapinfoOffset);
-                                }
-
-                                // 获取 MapID
-                                ULONGLONG ADFMGameState = decrypt_shift(lp1 + Offsets::GameState);
-                                if (ADFMGameState) {
-                                    mapId = read<int>(ADFMGameState + Offsets::MapConfig + 0x10);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if (is_in_lobby) {
+            cached_uworld_ptr = 0;
+            cached_local_player_ptr = 0;
+            cached_player_controller_ptr = 0;
+            cached_view_matrix_final_ptr = 0;
+            cached_my_root_component_ptr = 0;
+            cached_gamestate_ptr = 0;
+            cached_my_player_state_ptr = 0;
+            cached_my_team_id = -1;
+            cached_map_id = 0;
+            mapObjPtr = 0;
+            miniMapObjPtr = 0;
         }
 
+    UpdateSharedData:
         {
             std::unique_lock lk(sharedData.mutex);
             sharedData.my_location = myLoc;
             sharedData.my_team_id = myTeam;
             sharedData.is_in_match = inMatch;
-            sharedData.my_pawn_ptr = my_pawn;
+            sharedData.my_pawn_ptr = current_pawn_ptr;
             sharedData.view_matrix = vm;
             sharedData.camera_fov = current_fov;
         }
@@ -1899,13 +1928,12 @@ void GameLogic::viewAndSelfUpdateLoop() {
             pkt.is_main_map_open = isMapOpen;
             pkt.map_info = { mapInfo.X, mapInfo.Y, mapInfo.W, mapInfo.H, mapInfo.MapX, mapInfo.MapY, mapId };
             pkt.my_team_id = myTeam;
-            pkt.my_pawn_ptr = my_pawn;
+            pkt.my_pawn_ptr = current_pawn_ptr;
             pkt.my_yaw = myYaw;
             networkServer.send_packet(&pkt, sizeof(pkt));
-            //std::cout << "mapinfo:" << mapInfo.X << "," << mapInfo.Y << "," << mapInfo.W << "," << mapInfo.H << "," << mapInfo.MapX << "," << mapInfo.MapY << ", mapId:" << mapId << std::endl;
         }
 
-        std::this_thread::sleep_for(std::chrono::microseconds(1000000 / 240));
+        //std::this_thread::sleep_for(std::chrono::microseconds(1000000 / 240));
     }
 }
 
@@ -1957,7 +1985,7 @@ bool GameLogic::read_is_firing_flag() const
 /**
  * @brief 获取骨骼的瞄准优先级
  * * 数字越小，优先级越高 (0 = 最高优先级)
- * * 用于实现 "向上修正，向下锁定" 逻辑。
+ * * 用于实现 "向上修正，向下锁定" 逻辑
  * @param bone_id 骨骼ID
  * @return int 优先级 (0=最高, 999=最低)
  */
@@ -2200,15 +2228,15 @@ void GameLogic::aimbotLoop() {
             }
 
             switch (current_weapon_type) {
-            case WeaponType::Shotgun:
-            case WeaponType::DMR:
-            case WeaponType::Sniper:
-            case WeaponType::Pistol:
-                is_single_fire_mode = true;
-                break;
-            default:
-                is_single_fire_mode = false;
-                break;
+	            case WeaponType::Shotgun:
+	            case WeaponType::DMR:
+	            case WeaponType::Sniper:
+	            case WeaponType::Pistol:
+	                is_single_fire_mode = true;
+	                break;
+	            default:
+	                is_single_fire_mode = false;
+	                break;
             }
         }
 
@@ -2610,7 +2638,7 @@ void GameLogic::actorDiscoveryLoop() {
             my_pawn_ptr = sharedData.my_pawn_ptr;
         }
 
-        if (!in_match_now) {
+        if (!in_match_now || is_in_lobby) {
             bool cleared = false;
             auto clear_cache = [&](auto& cache, auto& mutex) {
                 std::unique_lock lk(mutex);
@@ -2622,16 +2650,16 @@ void GameLogic::actorDiscoveryLoop() {
                     cache.clear();
                     cleared = true;
                 }
-                };
+            };
             clear_cache(playerCache, playerCacheMutex);
             clear_cache(staticCache, staticCacheMutex);
             {
                 std::unique_lock lk(pendingActorsMutex);
                 if (!pendingActors.empty()) pendingActors.clear();
             }
-            if (cleared) {
-                std::cout << "[GameLogic] Left match, caches cleared." << std::endl;
-            }
+            //if (cleared) {
+            //    std::cout << "[GameLogic] Left match, caches cleared." << std::endl;
+            //}
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
             continue;
         }
@@ -2972,7 +3000,7 @@ void GameLogic::actorDiscoveryLoop() {
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        //std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 }
 
@@ -3450,7 +3478,7 @@ void GameLogic::playerStateUpdateLoop() {
         }
 
         // 控制循环频率
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 144)); // ~144Hz
+        //std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 144)); // ~144Hz
     }
     std::cout << "[GameLogic] Player update loop stopped." << std::endl;
 }
@@ -3581,7 +3609,7 @@ void GameLogic::consoleLoop() const {
 
         //if (!g_cfg.debug.load()) clear_console();
 
-        std::cout << "--- OwODeviceIOControl -- [v12.6 - @FangYan] ---\n"
+        std::cout << "--- OwODeviceIOControl -- [v13.0 - @FangYan] ---\n"
             << "Network: " << (networkServer.is_client_connected() ? "Client Connected" : "Waiting for Client...") << "\n"
             << "InMatch: " << (inMatch ? "Yes" : "No") << "\n";
 

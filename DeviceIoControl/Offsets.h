@@ -120,9 +120,8 @@ namespace Offsets
 	// FDFMCommonItemRow 相关
 	constexpr ULONG64 FDFMCommonItemRow = PickupItemInfo + PickupItemSize;  // struct FDFMCommonItemRow : public FDescRowBase
 	constexpr ULONG64 ItemName_1 = 0x18;
-	constexpr ULONG64 ItemName_2 = 0x18;
-	constexpr ULONG64 ItemName_3 = 0x38;
-	constexpr ULONG64 ItemName_4 = 0x10;
+	constexpr ULONG64 ItemName_2 = 0x38;
+	constexpr ULONG64 ItemName_3 = 0x10;
 	constexpr ULONG64 Quality = 0x0068;
 	constexpr ULONG64 InitialGuidePrice = 0x00D8;
 

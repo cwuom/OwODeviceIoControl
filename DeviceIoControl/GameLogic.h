@@ -224,4 +224,14 @@ private:
 	// 用于 decrypt_shift: 缓存加密指针的解密结果 (Key: Address, Value: DecryptedPtr)
 	mutable std::shared_mutex shiftCacheMutex; // 互斥锁，保证线程安全
 	mutable std::unordered_map<ULONG64, ULONG64> shiftCache;
+
+	ULONGLONG cached_uworld_ptr = 0;
+	ULONGLONG cached_gamestate_ptr = 0;
+	ULONGLONG cached_my_player_state_ptr = 0;
+	int cached_my_team_id = -1;
+	int cached_map_id = 0;
+	ULONGLONG cached_local_player_ptr = 0; // (lp4)
+
+	bool re_cache_all_pointers(ULONGLONG current_pawn_ptr, ULONGLONG player_controller);
+	bool is_in_lobby = false;
 };
