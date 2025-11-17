@@ -1,0 +1,13 @@
+.person-item {
+  width: 10px;
+  height: 10px;
+  background: red;
+  border-radius: 50%;
+  position: absolute;
+  /* left: 0;
+  top: 0; */
+  z-index: 2000;
+}
+/* #MapContainer {
+  transform: scale(0) !important;
+} */

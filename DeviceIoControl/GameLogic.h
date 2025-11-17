@@ -234,4 +234,14 @@ private:
 
 	bool re_cache_all_pointers(ULONGLONG current_pawn_ptr, ULONGLONG player_controller);
 	bool is_in_lobby = false;
+	int map_id = 0;
+
+
+	// 雷达
+	SOCKET udpSocket;
+	sockaddr_in serverAddr;
+	std::string currentRoomId;
+
+	void init_udp_socket(const std::string& host, int port);
+	void send_udp_message(const std::string& message);
 };

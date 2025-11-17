@@ -26,6 +26,14 @@
 #pragma comment(lib, "Zydis.lib")
 #pragma comment(lib, "Zycore.lib")
 
+#define MAP_ID_LOBBY 0
+#define MAP_ID_DAM 1
+#define MAP_ID_VALLEY 2
+#define MAP_ID_SPACE_CENTER 3
+#define MAP_ID_BAQQASH 4
+#define MAP_ID_TIDAL_PRISON 5
+#define MAP_ID_NULL 99
+
 extern int g_game_width;
 extern int g_game_height;
 
@@ -60,6 +68,7 @@ bool GameLogic::initialize() {
             std::cerr << "[GameLogic] Error: Game process not found.\n";
         }
 
+
         baseAddress = kernel.get_module_base_address(pid, L"DeltaForceClient-Win64-Shipping.exe");
         if (baseAddress != IMAGE_BASE)
         {
@@ -86,8 +95,44 @@ bool GameLogic::initialize() {
 
         std::cout << "[GameLogic] Initialized. PID: " << pid << ", BaseAddress: 0x" << std::hex << baseAddress << std::dec << std::endl;
 
+        std::cout << "------------------------------------------" << std::endl;
+        //std::cout << "Please enter the Room ID (must match web): ";
+        //std::cin >> currentRoomId;
+        currentRoomId = "10001";
+        std::cout << "Using Room ID: " << currentRoomId << std::endl;
+        std::cout << "------------------------------------------" << std::endl;
+
+        init_udp_socket("127.0.0.1", 9116);
+
         return true;
     }
+}
+
+void GameLogic::init_udp_socket(const std::string& host, int port) {
+    WSADATA wsaData;
+    int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (result != 0) {
+        std::cerr << "[UDP] WSAStartup failed: " << result << std::endl;
+        return;
+    }
+
+    udpSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (udpSocket == INVALID_SOCKET) {
+        std::cerr << "[UDP] Socket creation failed: " << WSAGetLastError() << std::endl;
+        WSACleanup();
+        return;
+    }
+
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port);
+    inet_pton(AF_INET, host.c_str(), &serverAddr.sin_addr);
+
+    std::cout << "[UDP] Socket initialized. Ready to send to " << host << ":" << port << std::endl;
+}
+
+void GameLogic::send_udp_message(const std::string& message) {
+    if (udpSocket == INVALID_SOCKET) return;
+    sendto(udpSocket, message.c_str(), (int)message.length(), 0, (SOCKADDR*)&serverAddr, sizeof(serverAddr));
 }
 
 // ------------------------- dynamic decrypt functions -------------------------
@@ -808,6 +853,11 @@ void GameLogic::stop() {
     join(mapModelThread);
     join(aimbotThread);
 
+    if (udpSocket != INVALID_SOCKET) {
+        closesocket(udpSocket);
+    }
+    WSACleanup();
+
     RTModel::DelModel();
     std::cout << "[GameLogic] All threads stopped." << std::endl;
 }
@@ -827,6 +877,7 @@ void GameLogic::clear_shift_cache() const {
     shiftCache.clear();
 }
 
+
 std::string GameLogic::get_main_world(ULONG64 Uworld)
 {
     std::string Ret_Name = "";
@@ -837,29 +888,36 @@ std::string GameLogic::get_main_world(ULONG64 Uworld)
 
     if (MainWorld_Name.find("Iris_Entry") != std::string::npos)
     {
+        map_id = MAP_ID_LOBBY;
         Ret_Name = u8"Lobby";
     }
     else if (MainWorld_Name.find("Dam_Iris_") != std::string::npos)
     {
+        map_id = MAP_ID_DAM;
         Ret_Name = u8"Dam";
     }
     else if (MainWorld_Name.find("Forrest_") != std::string::npos) {
+        map_id = MAP_ID_VALLEY;
         Ret_Name = u8"Valley";
     }
     else if (MainWorld_Name.find("SpaceCenter_") != std::string::npos)
     {
+        map_id = MAP_ID_SPACE_CENTER;
         Ret_Name = u8"Space Center";
     }
     else if (MainWorld_Name.find("Brakkesh_") != std::string::npos)
     {
+        map_id = MAP_ID_BAQQASH;
         Ret_Name = u8"Baqqash";
     }
     else if (MainWorld_Name.find("Prison") != std::string::npos)
     {
+        map_id = MAP_ID_TIDAL_PRISON;
         Ret_Name = u8"Tidal Prison";
     }
     else
     {
+		map_id = MAP_ID_NULL;
         Ret_Name = u8"NULL";
     }
 
@@ -1776,7 +1834,6 @@ void GameLogic::viewAndSelfUpdateLoop() {
         Vector3 myLoc{ 0,0,0 };
         float myYaw = 0.f;
         int myTeam = -1;
-        int mapId = 0;
         bool isMapOpen = false;
         Mapinfo mapInfo{};
         float current_fov = 90.0f;
@@ -1834,9 +1891,39 @@ void GameLogic::viewAndSelfUpdateLoop() {
                 myYaw = get_my_yaw_from_root(cached_my_root_component_ptr);
                 read_bytes(cached_view_matrix_final_ptr, &vm, sizeof(vm));
 
-                myTeam = cached_my_team_id;
-                mapId = cached_map_id;
+                if (inMatch && valid_location(myLoc)) {
+                    std::string myName = "本人";
+                    if (cached_my_player_state_ptr) {
+                        ULONGLONG name_ptr = read<ULONGLONG>(cached_my_player_state_ptr + Offsets::PlayerNamePrivate);
+                        if (name_ptr) {
+                            wchar_t buffer[32] = { 0 };
+                            if (read_bytes(name_ptr, buffer, sizeof(buffer) - sizeof(wchar_t))) {
+                                char narrow[64] = { 0 };
+                                WideCharToMultiByte(CP_UTF8, 0, buffer, -1, narrow, sizeof(narrow) - 1, nullptr, nullptr);
+                                if (strlen(narrow) > 0) {
+                                    myName = narrow;
+                                }
+                            }
+                        }
+                    }
 
+                    int entityType = 1; // 1 = 玩家
+
+                    // 格式化为雷达需要的字符串: roomId,tid,name,x,y,direction,type
+                    std::stringstream ss;
+                    ss << currentRoomId << ","
+                        << myTeam << ","
+                        << myName << ","
+                        << myLoc.x << ","
+                        << myLoc.y << ","
+                        << myYaw << ","
+                        << entityType;
+
+                    // 发送UDP消息到Go服务器
+                    send_udp_message(ss.str());
+                }
+
+                myTeam = cached_my_team_id;
                 // 计算 FOV
                 if (g_game_height > 0) {
                     float p_22 = vm._22;
@@ -1926,7 +2013,7 @@ void GameLogic::viewAndSelfUpdateLoop() {
             pkt.game_width = g_game_width;
             pkt.game_height = g_game_height;
             pkt.is_main_map_open = isMapOpen;
-            pkt.map_info = { mapInfo.X, mapInfo.Y, mapInfo.W, mapInfo.H, mapInfo.MapX, mapInfo.MapY, mapId };
+            pkt.map_info = { mapInfo.X, mapInfo.Y, mapInfo.W, mapInfo.H, mapInfo.MapX, mapInfo.MapY, map_id };
             pkt.my_team_id = myTeam;
             pkt.my_pawn_ptr = current_pawn_ptr;
             pkt.my_yaw = myYaw;
@@ -2579,6 +2666,18 @@ void GameLogic::actorDiscoveryLoop() {
                         pkt.price = read<int>(s.item_component_ptr + Offsets::InitialGuidePrice);
                         pkt.quality = read<int>(s.item_component_ptr + Offsets::Quality);
                         pkt.world_location = { s.location.x, s.location.y, s.location.z };
+                        std::stringstream ss;
+                        ss << currentRoomId << ","
+                            << pkt.quality << ","
+                            << pkt.name << ","
+                            << s.location.x << ","
+                            << s.location.y << ","
+                            << 0 << "," // 物品没有方向
+                            << 2;      // 2 = 物品
+
+                        // 发送UDP消息到Go服务器
+                        send_udp_message(ss.str());
+
                         networkServer.send_packet(&pkt, sizeof(pkt));
                     }
                     else if (s.cls == StaticClass::HackerPC) {
@@ -3250,6 +3349,13 @@ void GameLogic::playerStateUpdateLoop() {
                     p.rotation = c2w.Rotation; // 更新副本中的旋转
                 }
 
+                const auto& q = p.rotation;
+                const float YawY = 2.0f * (q.w * q.z + q.x * q.y);
+                const float YawX = (1.0f - 2.0f * (q.y * q.y + q.z * q.z));
+                float yawRadians = atan2f(YawY, YawX);
+                float yawDegrees = DirectX::XMConvertToDegrees(yawRadians);
+
+
                 // 发送位置包，高频
                 PlayerLocationPacket loc_pkt;
                 loc_pkt.header.type = PacketType::PLAYER_LOCATION_UPDATE;
@@ -3463,7 +3569,27 @@ void GameLogic::playerStateUpdateLoop() {
                     }
                 }
 
-                })); // 结束 std::async 的 lambda
+
+                // 定义实体类型 (1 = 玩家/AI)
+                int entityType = 1;
+
+                // 格式化字符串
+                std::stringstream ss;
+                ss << this->currentRoomId << ","
+                    << p.team_id << ","
+                    << p.name << ","
+                    << p.location.x << ","
+                    << p.location.y << ","
+                    << yawDegrees << ","
+                    << entityType;
+
+                if (p.team_id != 99)
+                {
+                    // 发送UDP消息到Go服务器
+                    this->send_udp_message(ss.str());
+                }
+
+            })); // 结束 std::async 的 lambda
         } // 结束 for (const auto key : keys)
 
         // 等待所有异步任务完成
