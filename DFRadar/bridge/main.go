@@ -102,7 +102,7 @@ func (rm *RoomManager) sseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 为这个客户端创建一个消息 channel
-	messageChan := make(Client, 10) // 10条消息的缓冲区
+	messageChan := make(Client, 2048)
 
 	// 将客户端添加到房间
 	rm.AddClient(roomId, messageChan)

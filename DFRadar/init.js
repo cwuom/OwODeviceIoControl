@@ -1,12 +1,12 @@
-var xW = 357100
-var yW = -770800
+var xW = 357385
+var yW = -769888
 var dee = 310
 
 function initDitu(type) {
   const ditu = type.slice(0, 1)
   if(ditu === "0") {
-    xW = 357100
-    yW = -770800
+    xW = 357385
+    yW = -769888
     dee = 310
   }
   if(ditu === "1") {
@@ -15,8 +15,8 @@ function initDitu(type) {
     dee = 180
   }
   if(ditu === "2") {
-    xW = 668200
-    yW = -452923
+    xW = 668720
+    yW = -452754
     dee = 270
   }
   if(ditu === "3") {

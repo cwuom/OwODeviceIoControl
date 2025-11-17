@@ -1529,6 +1529,7 @@ std::string GameLogic::get_operator_name(ULONGLONG player_state_ptr) const
 	        case 38: return u8"无名";
 	        case 39: return u8"疾风";
 	        case 40: return u8"银翼";
+            case 41: return u8"比特";
 	        default: return u8"干员(" + std::to_string(id) + ")";
         }
     }
@@ -1838,6 +1839,7 @@ void GameLogic::viewAndSelfUpdateLoop() {
         Mapinfo mapInfo{};
         float current_fov = 90.0f;
 
+
         bool inMatch = false; // 默认不在
         ULONGLONG current_pawn_ptr = 0;
         ULONGLONG player_controller_ptr = 0;
@@ -1893,6 +1895,17 @@ void GameLogic::viewAndSelfUpdateLoop() {
 
                 if (inMatch && valid_location(myLoc)) {
                     std::string myName = "本人";
+
+                    std::string myOperatorName = u8"未知";
+                    float myHealth = 100.0f;
+                    float myArmorHp = 0.0f;
+                    float myArmorMaxHp = 0.0f;
+                    int myArmorLvl = 0;
+                    std::string myWeapon = u8"";
+                    float myHelmetHp = 0.0f;
+                    float myHelmetMaxHp = 0.0f;
+                    int myHelmetLvl = 0;
+
                     if (cached_my_player_state_ptr) {
                         ULONGLONG name_ptr = read<ULONGLONG>(cached_my_player_state_ptr + Offsets::PlayerNamePrivate);
                         if (name_ptr) {
@@ -1905,11 +1918,48 @@ void GameLogic::viewAndSelfUpdateLoop() {
                                 }
                             }
                         }
+
+                        // 读取干员
+                        myOperatorName = get_operator_name(cached_my_player_state_ptr);
+
+                        // 读取血量
+                        ULONGLONG health_comp_ptr = read<ULONGLONG>(current_pawn_ptr + Offsets::HealthComp);
+                        if (health_comp_ptr) {
+                            ULONGLONG health_set_ptr = read<ULONGLONG>(health_comp_ptr + Offsets::HealthSet);
+                            if (health_set_ptr) {
+                                myHealth = read<float>(health_set_ptr + Offsets::DFMHealthDataComponent);
+                            }
+                        }
+
+                        // 读取护甲和头盔
+                        ULONGLONG equip_comp_ptr = read<ULONGLONG>(current_pawn_ptr + Offsets::CharacterEquipComponent);
+                        if (equip_comp_ptr) {
+                            ULONGLONG equip_info_array_ptr = read<ULONGLONG>(equip_comp_ptr + Offsets::EquipmentInfoArray);
+                            if (equip_info_array_ptr) {
+                                // 护甲
+                                BYTE raw_armor = read<BYTE>(equip_info_array_ptr + Offsets::EquipmentSlot_Armor);
+                                myArmorLvl = categorize_armor_level(raw_armor);
+                                if (myArmorLvl > 0) {
+                                    myArmorHp = read<float>(equip_info_array_ptr + Offsets::EquipmentSlot_Armor + 0x18);
+                                    myArmorMaxHp = read<float>(equip_info_array_ptr + Offsets::EquipmentSlot_Armor + 0x1C);
+                                }
+                                // 头盔
+                                BYTE raw_helmet = read<BYTE>(equip_info_array_ptr + Offsets::EquipmentSlot_Helmet);
+                                myHelmetLvl = categorize_armor_level(raw_helmet);
+                                if (myHelmetLvl > 0) {
+                                    myHelmetHp = read<float>(equip_info_array_ptr + Offsets::EquipmentSlot_Helmet + 0x18);
+                                    myHelmetMaxHp = read<float>(equip_info_array_ptr + Offsets::EquipmentSlot_Helmet + 0x1C);
+                                }
+                            }
+                        }
+
+
+                        // 读取武器
+                        myWeapon = get_held_weapon(current_pawn_ptr);
                     }
 
                     int entityType = 1; // 1 = 玩家
 
-                    // 格式化为雷达需要的字符串: roomId,tid,name,x,y,direction,type
                     std::stringstream ss;
                     ss << currentRoomId << ","
                         << myTeam << ","
@@ -1917,7 +1967,16 @@ void GameLogic::viewAndSelfUpdateLoop() {
                         << myLoc.x << ","
                         << myLoc.y << ","
                         << myYaw << ","
-                        << entityType;
+                        << entityType << ","
+                        << myOperatorName << ","
+                        << myHealth << ","
+                        << myArmorHp << ","
+                        << myArmorMaxHp << ","
+                        << myArmorLvl << ","
+                        << myWeapon << ","
+                        << myHelmetHp << ","
+                        << myHelmetMaxHp << ","
+                        << myHelmetLvl;
 
                     // 发送UDP消息到Go服务器
                     send_udp_message(ss.str());
@@ -2005,6 +2064,7 @@ void GameLogic::viewAndSelfUpdateLoop() {
             sharedData.camera_fov = current_fov;
         }
 
+		//std::cout << "MapX: " << mapInfo.MapX << ", MapY: " << mapInfo.MapY << ", MapW: " << mapInfo.W << ", MapH: " << mapInfo.H << std::endl;
         if (inMatch && networkServer.is_client_connected() && valid_location(myLoc)) {
             ViewUpdatePacket pkt;
             pkt.header.type = PacketType::VIEW_UPDATE;
@@ -3265,8 +3325,64 @@ void GameLogic::playerStateUpdateLoop() {
                     return; // 未验证成功，不发送更新
                 }
 
-                // 处理队友，如果是队友，确保客户端不知道他，然后跳过更新
+                // 更新位置和旋转，每次循环都执行
+                Vector3 current_loc = get_actor_location(p.actor_ptr); // 读取实时位置
+                if (!valid_location(current_loc)) { return; } // 如果位置无效，则跳过后续处理
+                p.location = current_loc; // 更新副本中的位置
+
+                if (p.root_component_ptr == 0) p.root_component_ptr = decrypt_shift(p.actor_ptr + Offsets::RootComponent);
+                if (p.root_component_ptr) {
+                    FTransform c2w = read<FTransform>(p.root_component_ptr + Offsets::ComponentToWorld);
+                    p.rotation = c2w.Rotation; // 更新副本中的旋转
+                }
+
+                const auto& q = p.rotation;
+                const float YawY = 2.0f * (q.w * q.z + q.x * q.y);
+                const float YawX = (1.0f - 2.0f * (q.y * q.y + q.z * q.z));
+                float yawRadians = atan2f(YawY, YawX);
+                float yawDegrees = DirectX::XMConvertToDegrees(yawRadians);
+
+                bool is_teammate = false;
+
+                // 提前读取所有人的信息
+                if (!p.is_ai) {
+                    if (p.name.empty() || p.name == "AI") { // 避免重复读取名字
+                        ULONGLONG name_ptr = read<ULONGLONG>(p.player_state_ptr + Offsets::PlayerNamePrivate);
+                        if (name_ptr) {
+                            wchar_t buffer[32] = { 0 };
+                            if (read_bytes(name_ptr, buffer, sizeof(buffer) - sizeof(wchar_t))) {
+                                char narrow[64] = { 0 };
+                                WideCharToMultiByte(CP_UTF8, 0, buffer, -1, narrow, sizeof(narrow) - 1, nullptr, nullptr);
+                                p.name = (strlen(narrow) > 0) ? narrow : "Player";
+                            }
+                            else p.name = "Player";
+                        }
+                        else p.name = "Player";
+                    }
+                    if (p.operator_name.empty()) { // 避免重复读取干员
+                        p.operator_name = get_operator_name(p.player_state_ptr);
+                    }
+                    // 读取护甲信息
+                    ULONGLONG equip_comp_ptr = read<ULONGLONG>(p.actor_ptr + Offsets::CharacterEquipComponent);
+                    if (equip_comp_ptr) {
+                        ULONGLONG equip_info_array_ptr = read<ULONGLONG>(equip_comp_ptr + Offsets::EquipmentInfoArray);
+                        if (equip_info_array_ptr) {
+                            BYTE raw_helmet = read<BYTE>(equip_info_array_ptr + Offsets::EquipmentSlot_Helmet);
+                            BYTE raw_armor = read<BYTE>(equip_info_array_ptr + Offsets::EquipmentSlot_Armor);
+                            p.helmet_level = categorize_armor_level(raw_helmet);
+                            p.armor_level = categorize_armor_level(raw_armor);
+                        }
+                    }
+                }
+                else { // 如果是 AI
+                    if (p.ai_type.empty()) p.ai_type = get_ai_type(p.actor_ptr);
+                    if (p.name.empty()) p.name = "AI";
+                    p.team_id = 99; // AI 默认队伍ID
+                }
+
+                // 处理队友，标记但不返回
                 if (p.team_id == my_team_id) {
+                    is_teammate = true;
                     std::unique_lock lk_team(playerCacheMutex); // 写锁修改缓存
                     auto it_team = playerCache.find(key);
                     if (it_team != playerCache.end()) {
@@ -3279,47 +3395,12 @@ void GameLogic::playerStateUpdateLoop() {
                         it_team->second.team_id = p.team_id;
                         it_team->second.verification_retries = 0; // 重置验证计数器
                     }
-                    return; // 跳过队友的数据包发送
                 }
 
-                // 发送创建包
+                // 仅在非队友时发送创建包
                 bool just_created = false;
-                if (!p.client_knows_about_it) {
-                    // 读取玩家名称、干员、护甲等静态信息
-                    if (!p.is_ai) {
-                        if (p.name.empty() || p.name == "AI") { // 避免重复读取名字
-                            ULONGLONG name_ptr = read<ULONGLONG>(p.player_state_ptr + Offsets::PlayerNamePrivate);
-                            if (name_ptr) {
-                                wchar_t buffer[32] = { 0 };
-                                if (read_bytes(name_ptr, buffer, sizeof(buffer) - sizeof(wchar_t))) {
-                                    char narrow[64] = { 0 };
-                                    WideCharToMultiByte(CP_UTF8, 0, buffer, -1, narrow, sizeof(narrow) - 1, nullptr, nullptr);
-                                    p.name = (strlen(narrow) > 0) ? narrow : "Player";
-                                }
-                                else p.name = "Player";
-                            }
-                            else p.name = "Player";
-                        }
-                        if (p.operator_name.empty()) { // 避免重复读取干员
-                            p.operator_name = get_operator_name(p.player_state_ptr);
-                        }
-                        // 读取护甲信息
-                        ULONGLONG equip_comp_ptr = read<ULONGLONG>(p.actor_ptr + Offsets::CharacterEquipComponent);
-                        if (equip_comp_ptr) {
-                            ULONGLONG equip_info_array_ptr = read<ULONGLONG>(equip_comp_ptr + Offsets::EquipmentInfoArray);
-                            if (equip_info_array_ptr) {
-                                BYTE raw_helmet = read<BYTE>(equip_info_array_ptr + Offsets::EquipmentSlot_Helmet);
-                                BYTE raw_armor = read<BYTE>(equip_info_array_ptr + Offsets::EquipmentSlot_Armor);
-                                p.helmet_level = categorize_armor_level(raw_helmet);
-                                p.armor_level = categorize_armor_level(raw_armor);
-                            }
-                        }
-                    }
-                    else { // 如果是 AI
-                        if (p.ai_type.empty()) p.ai_type = get_ai_type(p.actor_ptr);
-                        if (p.name.empty()) p.name = "AI";
-                        p.team_id = 99; // AI 默认队伍ID
-                    }
+                if (!p.client_knows_about_it && !is_teammate) {
+                    // (读取信息的逻辑已移到前面)
 
                     // 构建并发送创建包
                     PlayerCreatePacket create_pkt;
@@ -3338,23 +3419,6 @@ void GameLogic::playerStateUpdateLoop() {
                     just_created = true; // 标记为刚创建
                 }
 
-                // 更新位置和旋转，每次循环都执行
-                Vector3 current_loc = get_actor_location(p.actor_ptr); // 读取实时位置
-                if (!valid_location(current_loc)) { return; } // 如果位置无效，则跳过后续处理
-                p.location = current_loc; // 更新副本中的位置
-
-                if (p.root_component_ptr == 0) p.root_component_ptr = decrypt_shift(p.actor_ptr + Offsets::RootComponent);
-                if (p.root_component_ptr) {
-                    FTransform c2w = read<FTransform>(p.root_component_ptr + Offsets::ComponentToWorld);
-                    p.rotation = c2w.Rotation; // 更新副本中的旋转
-                }
-
-                const auto& q = p.rotation;
-                const float YawY = 2.0f * (q.w * q.z + q.x * q.y);
-                const float YawX = (1.0f - 2.0f * (q.y * q.y + q.z * q.z));
-                float yawRadians = atan2f(YawY, YawX);
-                float yawDegrees = DirectX::XMConvertToDegrees(yawRadians);
-
 
                 // 发送位置包，高频
                 PlayerLocationPacket loc_pkt;
@@ -3365,7 +3429,10 @@ void GameLogic::playerStateUpdateLoop() {
                 float dx = my_loc.x - p.location.x, dy = my_loc.y - p.location.y, dz = my_loc.z - p.location.z;
                 loc_pkt.distance = std::sqrt(dx * dx + dy * dy + dz * dz) / 100.f; // 计算距离
                 loc_pkt.pawn_ptr = p.actor_ptr; // 包含Pawn指针
-                networkServer.send_packet(&loc_pkt, sizeof(loc_pkt));
+                // 仅在非队友时发送
+                if (!is_teammate) {
+                    networkServer.send_packet(&loc_pkt, sizeof(loc_pkt));
+                }
 
                 // 更新骨骼和可见性
                 bool final_bone_visibility[NUM_BONES]; // 用于存储可见性结果
@@ -3421,7 +3488,10 @@ void GameLogic::playerStateUpdateLoop() {
                     skel_pkt.actor_id = p.actor_ptr;
                     memcpy(skel_pkt.skeleton, p.skeleton, sizeof(skel_pkt.skeleton));
                     memcpy(skel_pkt.bone_visibility, final_bone_visibility, sizeof(skel_pkt.bone_visibility));
-                    networkServer.send_packet(&skel_pkt, sizeof(skel_pkt));
+                    // 仅在非队友时发送
+                    if (!is_teammate) {
+                        networkServer.send_packet(&skel_pkt, sizeof(skel_pkt));
+                    }
                 }
 
                 // 更新状态 (血量/武器/瞄准)，低频
@@ -3525,7 +3595,10 @@ void GameLogic::playerStateUpdateLoop() {
                     state_pkt.armor_max_hp = max_armor_hp;
                     state_pkt.helmet_max_hp = max_helmet_hp;
 
-                    networkServer.send_packet(&state_pkt, sizeof(state_pkt));
+                    // 仅在非队友时发送
+                    if (!is_teammate) {
+                        networkServer.send_packet(&state_pkt, sizeof(state_pkt));
+                    }
                 }
 
                 // 将本次更新的数据写回缓存
@@ -3533,13 +3606,13 @@ void GameLogic::playerStateUpdateLoop() {
                     std::unique_lock lk(playerCacheMutex); // 写锁更新缓存
                     auto it = playerCache.find(key);
                     if (it != playerCache.end()) {
-                        // 更新基础信息，如果刚创建或验证通过
-                        if (just_created || it->second.team_id == -1) {
+                        // 更新基础信息，如果刚创建、验证通过或(是队友)
+                        if (just_created || it->second.team_id == -1 || is_teammate) {
                             it->second.name = p.name;
                             it->second.operator_name = p.operator_name;
                             it->second.helmet_level = p.helmet_level;
                             it->second.armor_level = p.armor_level;
-                            it->second.client_knows_about_it = true; // 确保标记为已知
+                            it->second.client_knows_about_it = p.client_knows_about_it; // 同步客户端感知状态
                             it->second.verification_retries = 0;    // 重置验证计数器
                         }
                         // 更新队伍ID，如果刚验证通过
@@ -3573,23 +3646,38 @@ void GameLogic::playerStateUpdateLoop() {
                 // 定义实体类型 (1 = 玩家/AI)
                 int entityType = 1;
 
+                if (is_teammate)
+                {
+					p.team_id = -1;
+                }
                 // 格式化字符串
                 std::stringstream ss;
-                ss << this->currentRoomId << ","
-                    << p.team_id << ","
-                    << p.name << ","
-                    << p.location.x << ","
-                    << p.location.y << ","
-                    << yawDegrees << ","
-                    << entityType;
+                ss << this->currentRoomId << ","      // 房间ID
+                    << p.team_id << ","               // 队伍ID
+                    << p.name << ","                  // 玩家名称
+                    << p.location.x << ","            // X坐标
+                    << p.location.y << ","            // Y坐标
+                    << yawDegrees << ","              // 朝向
+                    << entityType << ","              // 类型 (1=玩家)
+                    << p.operator_name << ","         // 角色名称
+                    << current_health << ","          // 当前血量
+                    << p.armor_hp << ","              // 当前护甲
+                    << p.armor_max_hp << ","          // 最大护甲
+                    << p.armor_level << ","           // 护甲等级
+                    << current_held_weapon << ","     // 手持武器
+                    << p.helmet_hp << ","             // 当前头盔
+                    << p.helmet_max_hp << ","         // 最大头盔
+                    << p.helmet_level;                // 头盔等级
 
+
+                // 不再检查 is_teammate，只过滤AI
                 if (p.team_id != 99)
                 {
-                    // 发送UDP消息到Go服务器
+                    // 发送 UDP 消息到 Go 服务器
                     this->send_udp_message(ss.str());
                 }
 
-            })); // 结束 std::async 的 lambda
+                })); // 结束 std::async 的 lambda
         } // 结束 for (const auto key : keys)
 
         // 等待所有异步任务完成

@@ -1,13 +1,290 @@
-.person-item {
-  width: 10px;
-  height: 10px;
-  background: red;
-  border-radius: 50%;
-  position: absolute;
-  /* left: 0;
-  top: 0; */
-  z-index: 2000;
+/* index.css (完整替换 - 最终缩小版 + 武器) */
+body,
+html,
+#map {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  background: #333; /* 地图背景色 */
 }
-/* #MapContainer {
-  transform: scale(0) !important;
-} */
+
+/* L.divIcon 的透明容器 */
+.person-icon-container,
+.material-icon-container {
+  background: transparent;
+  border: none;
+}
+
+/* 旋转部分 */
+.person-marker {
+  width: 32px;
+  height: 40px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 0;
+  transform-origin: 16px 32px; /* 旋转中心 */
+}
+
+.arrow {
+  width: 6px;
+  height: 100%;
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  z-index: 1; 
+}
+
+.actor-image {
+  position: absolute;
+  left: 16px; 
+  top: 26px;  
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+/* 队伍ID文本 */
+.text {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 40px; 
+  z-index: 3;
+  color: white;
+  font-weight: bold;
+  font-size: 13px; /* 缩小一点 */
+  padding: 1px 4px;
+  border-radius: 3px;
+  text-shadow: 0 0 3px black, 0 0 3px black, 0 0 3px black;
+  white-space: nowrap;
+  background-color: transparent !important;
+}
+
+/* 常驻信息框 (缩小宽度) */
+.info-box {
+  position: absolute;
+  top: 56px; /* 紧跟TID */
+  left: 50%;
+  transform: translateX(-50%); /* 自身居中 */
+  
+  width: 80px; /* 宽度 */
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px; /* 缩小间隙 */
+  
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 10px; /* 缩小字体 */
+  
+  background: rgba(0, 0, 0, 0.6); /* 调深一点背景 */
+  border-radius: 4px;
+  padding: 3px;
+  box-sizing: border-box;
+}
+
+.info-box .player-name {
+  color: #fff;
+  font-weight: bold;
+  font-size: 11px; /* 缩小 */
+  text-shadow: 1px 1px 1px #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}
+
+.info-box .operator-name {
+  color: #ccc;
+  font-style: italic;
+  font-size: 10px; /* 缩小 */
+  margin-top: -2px;
+  white-space: nowrap;
+}
+
+.info-box .bar-container {
+  width: 100%;
+  height: 10px; /* 缩小 */
+  background-color: #444;
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.info-box .bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.info-box .bar-text {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  font-size: 8px; /* 缩小 */
+  line-height: 10px; /* 缩小 */
+  color: white;
+  font-weight: 500;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.6);
+  white-space: nowrap; /* 防止文字换行 */
+}
+
+.info-box .health-bar .bar-fill {
+  background-color: #d9534f; /* 红色 */
+}
+
+/* 武器名称 */
+.info-box .weapon-name {
+  color: #ddd;
+  background-color: #3a3a3a;
+  padding: 1px 3px;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 9px; /* 缩小 */
+  width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* 护甲/头盔品质颜色 */
+.quality-0 { background-color: #9d9d9d; } /* 灰色 */
+.quality-1 { background-color: #ffffff; } /* 白色 */
+.quality-2 { background-color: #1eff00; } /* 绿色 */
+.quality-3 { background-color: #0070ff; } /* 蓝色 */
+.quality-4 { background-color: #a335ee; } /* 紫色 */
+.quality-5 { background-color: #ff8000; } /* 橙色 */
+.quality-6 { background-color: #e62020; } /* 红色 */
+.quality-text-1 { color: #000 !important; } /* 白色条用黑色字 */
+
+
+/* --- 物资和弹窗样式 --- */
+.material-marker {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid black;
+  box-sizing: border-box;
+  text-shadow: 0 0 2px black;
+}
+
+.player-leaflet-popup .leaflet-popup-content-wrapper {
+  background: #2a2a2a;
+  color: #f0f0f0;
+  border: 1px solid #555;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.player-leaflet-popup .leaflet-popup-content {
+  margin: 10px 15px;
+  padding: 0;
+  width: 180px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.4;
+}
+
+.player-leaflet-popup .leaflet-popup-close-button {
+  color: #ccc;
+  padding: 10px 10px 0 0;
+}
+.player-leaflet-popup .leaflet-popup-close-button:hover {
+  color: #fff;
+}
+
+.player-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.player-popup .popup-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  border-bottom: 1px solid #444;
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.player-popup .popup-operator {
+  font-size: 13px;
+  font-style: italic;
+  color: #aaa;
+}
+
+.player-popup .popup-weapon {
+  font-size: 13px;
+  color: #ddd;
+  background-color: #3a3a3a;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.popup-bar-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.popup-label {
+  width: 30px;
+  font-size: 11px;
+  color: #ccc;
+  font-weight: 500;
+}
+
+.popup-bar {
+  flex-grow: 1;
+  height: 16px;
+  background-color: #444;
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.popup-bar .bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.popup-bar .bar-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  font-size: 11px;
+  line-height: 16px;
+  color: white;
+  font-weight: 500;
+  text-shadow: 1px 1px 1px rgba(0,0,0,0.6);
+}
+
+.health-bar .bar-fill {
+  background-color: #d9534f;
+}
+
+.armor-bar .bar-fill {
+  background-color: #5bc0de;
+}
