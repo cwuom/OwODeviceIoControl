@@ -235,7 +235,7 @@ let gTid = ''; // 本人的队伍
 
 const userInput = prompt("请输入房间号：", "");
 if (userInput && userInput.trim()) {
-  const eventSource = new EventSource('http://192.168.0.232:9115/join?roomId=' + userInput.trim());
+  const eventSource = new EventSource('https://frp-bar.com:42757/join?roomId=' + userInput.trim());
 
   eventSource.onmessage = function (event) {
     // 解析16个字段

@@ -1015,7 +1015,6 @@ void GameLogic::mapModelLoop() {
 
         // Lobby 或未知地图：不加载，稍后再看
         if (modelPath.empty()) {
-            is_in_lobby = true;
             //std::cout << "[PhysX] Left match. Unloading map model..." << std::endl;
             RTModel::DelModel();
             RTModel::Init();
@@ -1831,6 +1830,13 @@ bool GameLogic::re_cache_all_pointers(ULONGLONG current_pawn_ptr, ULONGLONG play
 
 void GameLogic::viewAndSelfUpdateLoop() {
     while (running) {
+        if (map_id == MAP_ID_LOBBY) {
+            is_in_lobby = true;
+        }
+        else {
+            is_in_lobby = false;
+        }
+
         DirectX::XMFLOAT4X4 vm{};
         Vector3 myLoc{ 0,0,0 };
         float myYaw = 0.f;
