@@ -58,6 +58,11 @@ public:
 	void stop();
 	void clear_decrypt_cache() const;
 
+	/**
+	 * @brief 解密一个可能被 800 加密的 QWORD
+	 */
+	UINT64 decrypt_qword(INT64 a1);
+
 private:
 	// 内部函数
 	void viewAndSelfUpdateLoop();
@@ -176,6 +181,7 @@ private:
 		DirectX::XMFLOAT4X4 view_matrix{}; // 视图矩阵
 		float camera_fov = 120.0f;           // FOV
 		mutable std::shared_mutex mutex;
+		bool is_big_battlefield = false;
 	} sharedData;
 
 	std::unordered_map<uint64_t, CachedPlayer> playerCache;
@@ -244,4 +250,16 @@ private:
 
 	void init_udp_socket(const std::string& host, int port);
 	void send_udp_message(const std::string& message);
+
+
+	std::thread encryptionCheckThread; // 用于加密检查的线程句柄
+
+	// 800 加密所需的状态和密钥
+	std::atomic<bool> is800Encrypted;  // 线程安全的加密状态标志
+	alignas(32) ULONG64 ymm15Key[4];   // 存储 YMM15 密钥
+
+	/**
+	 * @brief 在后台循环检查 800 加密状态的线程函数
+	 */
+	void encryptionCheckLoop();
 };

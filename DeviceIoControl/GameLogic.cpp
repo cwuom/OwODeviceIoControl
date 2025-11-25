@@ -49,10 +49,14 @@ constexpr std::uintptr_t MAGIC = 0x00004A0000000000;
 std::unordered_map<uintptr_t, uintptr_t> g_remotePointerCache;
 const uintptr_t IMAGE_BASE = 0x140000000;
 
+extern "C" extern uint64_t AsmDec800(uint64_t rcx, PVOID rdx);
+
 GameLogic::GameLogic(MemoryAccessClient& k, NetworkServerUdp& ns)
-    : kernel(k), networkServer(ns)
+    : kernel(k), networkServer(ns), is800Encrypted(false)
 {
     s_instance = this;
+    // 显式清零密钥数组
+    memset(ymm15Key, 0, sizeof(ymm15Key));
 }
 
 GameLogic::~GameLogic() {
@@ -136,6 +140,89 @@ void GameLogic::send_udp_message(const std::string& message) {
 }
 
 // ------------------------- dynamic decrypt functions -------------------------
+
+UINT64 GameLogic::decrypt_qword(INT64 a1)
+{
+    // 检查是否为加密指针
+    if (a1 & 0x8000000000000000)
+    {
+        // 从线程安全的成员变量读取加密状态
+        if (is800Encrypted.load(std::memory_order_relaxed) == false)
+        {
+            return a1; // 未加密，直接返回
+        }
+
+        // 提取低 48 位
+        a1 = a1 & 0xFFFFFFFFFFFF;
+
+        // 调用汇编函数解密，使用成员变量存储的密钥
+        return AsmDec800(a1, &ymm15Key);
+    }
+
+    // 不是加密指针，直接返回
+    return a1;
+}
+
+/**
+ * @brief 后台线程，每5秒检查一次 800 加密状态
+ */
+void GameLogic::encryptionCheckLoop()
+{
+    //while (running.load(std::memory_order_relaxed))
+    //{
+    //    bool foundEncryption = false;
+    //    ULONG64 keyPart3 = 0;
+
+    //    try
+    //    {
+    //        ULONG64 decryptCall = read<ULONG64>(0x153F960A0);
+    //        if (decryptCall)
+    //        {
+    //            auto decryptCallType = read<ULONG64>(decryptCall);
+				//std::cout << "[EncryptionCheck] Decrypt Call Type: 0x" << std::hex << decryptCallType << std::dec << std::endl;
+    //            if (decryptCallType == 0xBA48018B48)
+    //            {
+    //                auto ymmAddr = decryptCall + 0xC4C;
+    //                auto offset = read<ULONG>(ymmAddr - 4);
+
+    //                ymmAddr = read<ULONG64>(ymmAddr + offset);
+
+    //                // 读取密钥
+    //                keyPart3 = read<ULONG64>(ymmAddr);
+
+    //                foundEncryption = true;
+    //            }
+    //        }
+    //    }
+    //    catch (const std::exception& e)
+    //    {
+    //        std::cerr << "[EncryptionCheck] Error during read: " << e.what() << std::endl;
+    //        foundEncryption = false;
+    //    }
+    //    catch (...)
+    //    {
+    //        std::cerr << "[EncryptionCheck] Unknown error during read." << std::endl;
+    //        foundEncryption = false;
+    //    }
+
+
+    //    // 更新状态和密钥
+    //    if (foundEncryption)
+    //    {
+    //        ymm15Key[3] = keyPart3; // 存储密钥
+    //        is800Encrypted.store(true, std::memory_order_relaxed);
+    //        std::cout << "[EncryptionCheck] 800 Encryption: ON (Key[3] = 0x" << std::hex << keyPart3 << std::dec << ")" << std::endl;
+    //    }
+    //    else
+    //    {
+    //        is800Encrypted.store(false, std::memory_order_relaxed);
+    //        std::cout << "[EncryptionCheck] 800 Encryption: OFF" << std::endl;
+    //    }
+
+    //    // 等待5秒
+    //    std::this_thread::sleep_for(std::chrono::seconds(5));
+    //}
+}
 
 uintptr_t GameLogic::TranslateRemotePointer(uintptr_t remotePtr) const
 {
@@ -840,6 +927,7 @@ void GameLogic::start() {
     consoleThread = std::thread(&GameLogic::consoleLoop, this);
     mapModelThread = std::thread(&GameLogic::mapModelLoop, this);
     aimbotThread = std::thread(&GameLogic::aimbotLoop, this);
+    encryptionCheckThread = std::thread(&GameLogic::encryptionCheckLoop, this);
 }
 
 void GameLogic::stop() {
@@ -852,6 +940,7 @@ void GameLogic::stop() {
     join(consoleThread);
     join(mapModelThread);
     join(aimbotThread);
+    join(encryptionCheckThread);
 
     if (udpSocket != INVALID_SOCKET) {
         closesocket(udpSocket);
@@ -881,6 +970,7 @@ void GameLogic::clear_shift_cache() const {
 std::string GameLogic::get_main_world(ULONG64 Uworld)
 {
     std::string Ret_Name = "";
+    bool is_big_map = false;
 
     ULONG64 WorldComposition = read<ULONG64>(Uworld + Offsets::WorldComposition);
     ULONG32 MainWorld = read<ULONG32>(WorldComposition + Offsets::MainWorld);
@@ -919,6 +1009,12 @@ std::string GameLogic::get_main_world(ULONG64 Uworld)
     {
 		map_id = MAP_ID_NULL;
         Ret_Name = u8"NULL";
+        is_big_map = true;
+    }
+
+    {
+        std::unique_lock lk(sharedData.mutex);
+        sharedData.is_big_battlefield = is_big_map;
     }
 
     std::cout << "[GameLogic] Get_MainWorld_Name. " << std::hex << "WorldComposition: 0x" << WorldComposition << ", MainWorld: " << MainWorld << ", MainWorld_Name: " << MainWorld_Name << ", Ret_Name: " << Ret_Name << std::dec << std::endl;
@@ -1784,6 +1880,7 @@ bool GameLogic::re_cache_all_pointers(ULONGLONG current_pawn_ptr, ULONGLONG play
         return false;
     }
 
+
     // 缓存 PlayerState 和 TeamID
     cached_my_player_state_ptr = read<ULONGLONG>(current_pawn_ptr + Offsets::PlayerState);
     if (cached_my_player_state_ptr) {
@@ -1809,13 +1906,26 @@ bool GameLogic::re_cache_all_pointers(ULONGLONG current_pawn_ptr, ULONGLONG play
     }
 
     // 缓存视图矩阵指针
-    ULONGLONG vmb = read<ULONGLONG>(baseAddress + Offsets::ViewMatrix_Base);
-    if (vmb) {
-        ULONGLONG mp = read<ULONGLONG>(vmb + Offsets::ViewMatrix_Offset1) + Offsets::ViewMatrix_Offset2;
+	// 读取原始的 ViewMatrix_Base 指针
+    ULONGLONG raw_vmb = read<ULONGLONG>(baseAddress + Offsets::ViewMatrix_Base);
+
+    // 应用 800 解密
+    ULONGLONG vmb_decrypted = decrypt_qword(raw_vmb);
+
+    if (vmb_decrypted) {
+        // 3. 保持你项目原有的偏移逻辑来获取最终地址
+        ULONGLONG mp = read<ULONGLONG>(vmb_decrypted + Offsets::ViewMatrix_Offset1) + Offsets::ViewMatrix_Offset2;
         if (mp) {
             cached_view_matrix_final_ptr = mp;
         }
+        else {
+            cached_view_matrix_final_ptr = 0; // 清理
+        }
     }
+    else {
+        cached_view_matrix_final_ptr = 0; // 清理
+    }
+
     if (!cached_view_matrix_final_ptr) {
         std::cerr << "[ViewLoop] Re-cache FAILED: Could not find ViewMatrix pointer." << std::endl;
         return false;
@@ -2271,7 +2381,7 @@ void GameLogic::aimbotLoop() {
     bool is_on_target = false;
 
     constexpr float BASE_RECOIL_FOV = 90.0f;
-    const float AUTO_TRIGGER_RADIUS_SQ = 35.0f * 35.0f;
+    const float AUTO_TRIGGER_RADIUS_SQ = 25.0f * 25.0f;
 
     auto firing_start_time = std::chrono::steady_clock::now();
     WeaponType current_weapon_type = WeaponType::Unknown;
@@ -2341,23 +2451,23 @@ void GameLogic::aimbotLoop() {
         bool aimbot_on = g_cfg.aimbot_enabled.load(std::memory_order_relaxed);
         bool recoil_on = g_cfg.simulated_recoil_enabled.load(std::memory_order_relaxed);
 
-        if (!is_in_match || my_pawn == 0 || !valid_location(my_loc)) {
-            if (remain_aim_dx != 0.0f || remain_aim_dy != 0.0f || remain_recoil_dx != 0.0f || remain_recoil_dy != 0.0f) {
-                atomic_write_text(lua_config_path, "aim_dx = 0\naim_dy = 0\nrecoil_dx = 0\nrecoil_dy = 0\nis_recoiling = false\nis_on_target = false\nis_single_fire = false\n");
-            }
-            remain_aim_dx = 0.0f; remain_aim_dy = 0.0f;
-            remain_recoil_dx = 0.0f; remain_recoil_dy = 0.0f;
+        //if (!is_in_match || my_pawn == 0 || !valid_location(my_loc)) {
+        //    if (remain_aim_dx != 0.0f || remain_aim_dy != 0.0f || remain_recoil_dx != 0.0f || remain_recoil_dy != 0.0f) {
+        //        atomic_write_text(lua_config_path, "aim_dx = 0\naim_dy = 0\nrecoil_dx = 0\nrecoil_dy = 0\nis_recoiling = false\nis_on_target = false\nis_single_fire = false\n");
+        //    }
+        //    remain_aim_dx = 0.0f; remain_aim_dy = 0.0f;
+        //    remain_recoil_dx = 0.0f; remain_recoil_dy = 0.0f;
 
-            pid_x.reset();
-            pid_y.reset();
+        //    pid_x.reset();
+        //    pid_y.reset();
 
-            locked_target_ptr = 0;
-            locked_target_bone = BoneID::root;
-            locked_target_priority = 999;
-            firing_start_time = std::chrono::steady_clock::now();
-            current_weapon_type = WeaponType::Unknown;
-            continue;
-        }
+        //    locked_target_ptr = 0;
+        //    locked_target_bone = BoneID::root;
+        //    locked_target_priority = 999;
+        //    firing_start_time = std::chrono::steady_clock::now();
+        //    current_weapon_type = WeaponType::Unknown;
+        //    continue;
+        //}
 
         float recoil_x = 0.0f;
         float recoil_y = 0.0f;
@@ -2393,7 +2503,7 @@ void GameLogic::aimbotLoop() {
             }
         }
 
-        if (recoil_on && !is_single_fire_mode) {
+        if (recoil_on) {
             {
                 std::shared_lock lock(g_cfg.recoil_settings_mutex);
                 int index = static_cast<int>(current_weapon_type);
@@ -2490,6 +2600,11 @@ void GameLogic::aimbotLoop() {
                     for (const auto& bone_setting : bones_to_check_cfg) {
                         if (!bone_setting.enabled) continue;
                         int bone_index = static_cast<int>(bone_setting.bone_id);
+
+                        if (p.is_ai && bone_setting.bone_id != BoneID::Head) {
+                            continue;
+                        }
+
                         if (bone_index < 0 || bone_index >= NUM_BONES || !is_valid_bone_position(p.skeleton[bone_index])) continue;
                         Vector3 bone_world_pos = { p.skeleton[bone_index].x, p.skeleton[bone_index].y, p.skeleton[bone_index].z };
                         bool is_bone_visible = true;
@@ -2683,7 +2798,7 @@ void GameLogic::aimbotLoop() {
         ss << "aim_dy = " << step_aim_dy << "\n";
         ss << "recoil_dx = " << step_recoil_dx << "\n";
         ss << "recoil_dy = " << step_recoil_dy << "\n";
-        ss << "is_recoiling = " << (recoil_on && is_firing_state && !is_single_fire_mode ? "true" : "false") << "\n";
+        ss << "is_recoiling = " << (recoil_on && is_firing_state ? "true" : "false") << "\n";
         ss << "is_on_target = " << (is_on_target ? "true" : "false") << "\n";
         ss << "is_single_fire = " << (is_single_fire_mode ? "true" : "false") << "\n";
         bool write_ok = atomic_write_text(lua_config_path, ss.str());
@@ -2696,6 +2811,16 @@ void GameLogic::aimbotLoop() {
 
 // TODO: 动静态实体的 搜索、清理 速度优化，目前感知较强的是 ITEM 静态实体在被队友捡起后仍然会持续被广播一段时间
 void GameLogic::actorDiscoveryLoop() {
+    // 扫描游标
+    size_t current_scan_index = 0;
+    // 物品状态验证游标
+    size_t verify_item_index = 0;
+
+    // 忽略列表：记录已知是垃圾（非玩家、非物品、非容器）的 Actor 指针
+    std::unordered_set<ULONGLONG> ignoredCache;
+    // 预留空间，防止频繁重哈希
+    ignoredCache.reserve(10000);
+
     while (running) {
         if (networkServer.newClientJustConnected.load()) {
             std::cout << "[GameLogic] New client connected. Performing full state sync..." << std::endl;
@@ -2733,17 +2858,9 @@ void GameLogic::actorDiscoveryLoop() {
                         pkt.quality = read<int>(s.item_component_ptr + Offsets::Quality);
                         pkt.world_location = { s.location.x, s.location.y, s.location.z };
                         std::stringstream ss;
-                        ss << currentRoomId << ","
-                            << pkt.quality << ","
-                            << pkt.name << ","
-                            << s.location.x << ","
-                            << s.location.y << ","
-                            << 0 << "," // 物品没有方向
-                            << 2;      // 2 = 物品
-
-                        // 发送UDP消息到Go服务器
+                        ss << currentRoomId << "," << pkt.quality << "," << pkt.name << ","
+                            << s.location.x << "," << s.location.y << "," << 0 << "," << 2;
                         send_udp_message(ss.str());
-
                         networkServer.send_packet(&pkt, sizeof(pkt));
                     }
                     else if (s.cls == StaticClass::HackerPC) {
@@ -2804,46 +2921,79 @@ void GameLogic::actorDiscoveryLoop() {
         }
 
         if (!in_match_now || is_in_lobby) {
-            bool cleared = false;
-            auto clear_cache = [&](auto& cache, auto& mutex) {
-                std::unique_lock lk(mutex);
-                if (!cache.empty()) {
-                    for (auto const& [key, val] : cache) {
-                        EntityDestroyPacket pkt{ {PacketType::ENTITY_DESTROY}, key };
-                        networkServer.send_packet(&pkt, sizeof(pkt));
+            bool need_cleanup = !playerCache.empty() || !staticCache.empty() || !ignoredCache.empty();
+
+            if (need_cleanup) {
+                auto clear_cache = [&](auto& cache, auto& mutex) {
+                    std::unique_lock lk(mutex);
+                    if (!cache.empty()) {
+                        for (auto const& [key, val] : cache) {
+                            EntityDestroyPacket pkt{ {PacketType::ENTITY_DESTROY}, key };
+                            networkServer.send_packet(&pkt, sizeof(pkt));
+                        }
+                        cache.clear();
                     }
-                    cache.clear();
-                    cleared = true;
+                    };
+                clear_cache(playerCache, playerCacheMutex);
+                clear_cache(staticCache, staticCacheMutex);
+                {
+                    std::unique_lock lk(pendingActorsMutex);
+                    pendingActors.clear();
                 }
-            };
-            clear_cache(playerCache, playerCacheMutex);
-            clear_cache(staticCache, staticCacheMutex);
-            {
-                std::unique_lock lk(pendingActorsMutex);
-                if (!pendingActors.empty()) pendingActors.clear();
+                // 清空忽略列表，确保下一局重新扫描
+                ignoredCache.clear();
             }
-            //if (cleared) {
-            //    std::cout << "[GameLogic] Left match, caches cleared." << std::endl;
-            //}
+
+            current_scan_index = 0;
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
             continue;
         }
 
+
         std::vector<ULONGLONG> actor_pointers;
+        actor_pointers.reserve(10000);
+        bool is_800_enabled = is800Encrypted.load(std::memory_order_relaxed);
+
         ULONGLONG uworld_ptr = read<ULONGLONG>(baseAddress + Offsets::Uworld);
         if (uworld_ptr) {
             ULONGLONG levels_ptr = read<ULONGLONG>(uworld_ptr + Offsets::UlevelS);
             int levels_count = read<int>(uworld_ptr + Offsets::UlevelSCount);
-            if (levels_ptr && levels_count > 0 && levels_count < 1000) {
+
+            if (levels_ptr && levels_count > 0) {
                 for (int i = 0; i < levels_count; ++i) {
-                    ULONGLONG ulevel = read<ULONGLONG>(levels_ptr + static_cast<unsigned long long>(i) * 8);
+                    ULONGLONG ulevel = 0;
+                    if (is_800_enabled) {
+                        ULONGLONG raw_ulevel_ptr = read<ULONGLONG>(levels_ptr + static_cast<unsigned long long>(i) * 8);
+                        ulevel = decrypt_qword(raw_ulevel_ptr);
+                    }
+                    else {
+                        ulevel = read<ULONGLONG>(levels_ptr + static_cast<unsigned long long>(i) * 8);
+                    }
                     if (!ulevel) continue;
-                    ULONGLONG actors_ptr = read<ULONGLONG>(ulevel + Offsets::Actor);
+
+                    ULONGLONG actors_ptr = 0;
                     int actors_count = read<int>(ulevel + Offsets::Count);
-                    if (actors_ptr && actors_count > 0 && actors_count < 8192) {
-                        std::vector<ULONGLONG> tmp(actors_count);
-                        if (read_bytes(actors_ptr, tmp.data(), static_cast<size_t>(actors_count) * sizeof(ULONGLONG))) {
-                            actor_pointers.insert(actor_pointers.end(), tmp.begin(), tmp.end());
+                    if (is_800_enabled) {
+                        ULONGLONG raw_actors_ptr = read<ULONGLONG>(ulevel + Offsets::Actor);
+                        actors_ptr = decrypt_qword(raw_actors_ptr);
+                    }
+                    else {
+                        actors_ptr = read<ULONGLONG>(ulevel + Offsets::Actor);
+                    }
+
+                    if (actors_ptr && actors_count > 0 && actors_count < 20000) {
+                        if (is_800_enabled) {
+                            for (int j = 0; j < actors_count; ++j) {
+                                ULONGLONG raw_actor_ptr = read<ULONGLONG>(actors_ptr + static_cast<size_t>(j) * sizeof(ULONGLONG));
+                                ULONGLONG decrypted_actor_ptr = decrypt_qword(raw_actor_ptr);
+                                if (decrypted_actor_ptr) actor_pointers.push_back(decrypted_actor_ptr);
+                            }
+                        }
+                        else {
+                            std::vector<ULONGLONG> tmp(actors_count);
+                            if (read_bytes(actors_ptr, tmp.data(), static_cast<size_t>(actors_count) * sizeof(ULONGLONG))) {
+                                actor_pointers.insert(actor_pointers.end(), tmp.begin(), tmp.end());
+                            }
                         }
                     }
                 }
@@ -2855,6 +3005,7 @@ void GameLogic::actorDiscoveryLoop() {
             continue;
         }
 
+        // 建立本帧存在的 Set，用于快速 Cleanup
         std::unordered_set seen_this_frame(actor_pointers.begin(), actor_pointers.end());
 
         {
@@ -2863,8 +3014,8 @@ void GameLogic::actorDiscoveryLoop() {
                 ULONGLONG actor_ptr = it->first;
                 it->second++;
 
+                // 如果 Pending 的物体这帧已经不见了，直接移除
                 if (seen_this_frame.find(actor_ptr) == seen_this_frame.end() || it->second > 100) {
-                    if (g_cfg.debug.load()) std::cout << "[Debug] Removing Actor 0x" << std::hex << actor_ptr << " from pending list (timeout/disappeared)." << std::dec << std::endl;
                     it = pendingActors.erase(it);
                     continue;
                 }
@@ -2872,18 +3023,11 @@ void GameLogic::actorDiscoveryLoop() {
                 CachedStatic s{};
                 s.actor_ptr = actor_ptr;
                 s.object_id = read<int>(actor_ptr + Offsets::ObjectID);
-                //s.root_component_ptr = read<ULONGLONG>(actor_ptr + Offsets::RootComponent) >> 4;
                 s.root_component_ptr = decrypt_shift(actor_ptr + Offsets::RootComponent);
 
-                if (s.object_id <= 0 || !s.root_component_ptr) {
-                    ++it; continue;
-                }
-
+                if (s.object_id <= 0 || !s.root_component_ptr) { ++it; continue; }
                 s.location = read_enc_location(s.root_component_ptr);
-                if (!valid_location(s.location)) {
-                    if (g_cfg.debug.load()) std::cout << "[Debug] Pending Actor 0x" << std::hex << actor_ptr << " location still invalid, retrying." << std::dec << std::endl;
-                    ++it; continue;
-                }
+                if (!valid_location(s.location)) { ++it; continue; }
 
                 s.class_name = get_name_fast(s.object_id);
                 if (!is_dead_body_class(s.class_name)) {
@@ -2892,12 +3036,8 @@ void GameLogic::actorDiscoveryLoop() {
                 }
 
                 ULONGLONG owner_ps_ptr = read<ULONGLONG>(actor_ptr + Offsets::OwnerPlayerState);
-                if (!owner_ps_ptr) {
-                    if (g_cfg.debug.load()) std::cout << "[Debug] Pending Actor 0x" << std::hex << actor_ptr << " owner info missing, retrying." << std::dec << std::endl;
-                    ++it; continue;
-                }
+                if (!owner_ps_ptr) { ++it; continue; }
 
-                if (g_cfg.debug.load()) std::cout << "[Debug] Processing Pending Actor 0x" << std::hex << actor_ptr << " as Dead Body Box." << std::dec << std::endl;
                 s.cls = StaticClass::PlayerLootBox;
                 s.box_owner = (read<BYTE>(owner_ps_ptr + Offsets::bIsABot) != 0) ? LootBoxOwnerType::Player : LootBoxOwnerType::AI;
 
@@ -2918,53 +3058,62 @@ void GameLogic::actorDiscoveryLoop() {
                     staticCache[actor_ptr] = s;
                 }
                 it = pendingActors.erase(it);
-
             }
         }
 
-        for (const auto actor_ptr : actor_pointers) {
+        size_t total_actors = actor_pointers.size();
+        size_t processed_unknown_actors = 0;
+        const size_t NEW_ACTOR_BUDGET = 500;
+
+        for (size_t i = 0; i < total_actors; ++i) {
+            // 循环遍历数组
+            size_t idx = (current_scan_index + i) % total_actors;
+            ULONGLONG actor_ptr = actor_pointers[idx];
+
             if (!actor_ptr || actor_ptr == my_pawn_ptr) continue;
 
-            bool in_player_cache, in_static_cache, in_pending_cache;
-            { std::shared_lock lk(playerCacheMutex); in_player_cache = playerCache.count(actor_ptr); }
-            { std::shared_lock lk(staticCacheMutex); in_static_cache = staticCache.count(actor_ptr); }
-            { std::shared_lock lk(pendingActorsMutex); in_pending_cache = pendingActors.count(actor_ptr); }
-            if (in_player_cache || in_static_cache || in_pending_cache) continue;
+            if (ignoredCache.count(actor_ptr)) continue;
+
+            // 检查是否已缓存 (O(1))
+            bool is_known = false;
+            { std::shared_lock lk(playerCacheMutex); if (playerCache.count(actor_ptr)) is_known = true; }
+            if (!is_known) { std::shared_lock lk(staticCacheMutex); if (staticCache.count(actor_ptr)) is_known = true; }
+            if (!is_known) { std::shared_lock lk(pendingActorsMutex); if (pendingActors.count(actor_ptr)) is_known = true; }
+
+            if (is_known) continue;
+
+            processed_unknown_actors++;
+            if (processed_unknown_actors > NEW_ACTOR_BUDGET) {
+                // 如果单帧处理的新物体太多，记录位置，下帧再战
+                current_scan_index = idx;
+                break;
+            }
 
             int object_id = read<int>(actor_ptr + Offsets::ObjectID);
-            if (object_id <= 0) continue;
+            if (object_id <= 0) {
+                ignoredCache.insert(actor_ptr); // 坏指针，拉黑
+                continue;
+            }
             std::string class_name = get_name_fast(object_id);
-            if (class_name.empty()) continue;
+            if (class_name.empty()) {
+                ignoredCache.insert(actor_ptr); // 空名，拉黑
+                continue;
+            }
 
-            //        if (class_name.find("Character") != std::string::npos)
-            //        {
-            //            if (
-            //                class_name == "CharacterEquip"
-            //                || class_name == "CharacterFashionComponent"
-            //                || class_name == "DFMCharacterAmbientAudioFSM"
-            //                || class_name == "BP_PropertyReplicationCharacterHealth_C_PropertyReplicationActor_UniqueName"
-            //                || class_name == "AICharacterSignificanceComponent"
-            //                || class_name == "SOLCharacterEquipComponent"
-            //                || class_name == "DFMCharacterBattleClass"
-            //                || class_name == "DFMCharacterFSM_Main_C"
-            //                || class_name == "BP_DFMCharacter_SafeHouse_C"
-            //                || class_name == "BP_CharacterLODSystem_C"
-            //                || class_name == "BP_HallCharacter_C"
-            //                || class_name == "BP_DFMCharacter_CS1P"
-            //                || class_name == "BP_HallCharacter"
-            //                )
-            //            {
-            //                continue;
-            //            }
-                        //std::cout << class_name << std::endl;
-            //        }
-            if (class_name.find("BP_DFMCharacter") != std::string::npos || class_name.find("BP_DFMAICharacter") != std::string::npos || class_name.find("BP_RangeTargetCharacter_C") != std::string::npos) {
+            bool is_relevant = false;
+
+            // 玩家/AI
+            if (class_name.find("BP_DFMCharacter") != std::string::npos ||
+                class_name.find("BP_DFMAICharacter") != std::string::npos ||
+                class_name.find("BP_RangeTargetCharacter_C") != std::string::npos)
+            {
+                is_relevant = true;
                 CachedPlayer p{};
                 p.actor_ptr = actor_ptr;
                 p.class_name = class_name;
-                std::string lower_class_name = class_name;
-                std::transform(lower_class_name.begin(), lower_class_name.end(), lower_class_name.begin(), ::tolower);
-                p.is_ai = lower_class_name.find("aicharacter") != std::string::npos || lower_class_name.find("_ai_") != std::string::npos || class_name.find("BP_RangeTargetCharacter_C") != std::string::npos;
+                std::string lower = class_name;
+                std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+                p.is_ai = lower.find("aicharacter") != std::string::npos || lower.find("_ai_") != std::string::npos || class_name.find("BP_RangeTargetCharacter_C") != std::string::npos;
 
                 if (p.is_ai) {
                     p.team_id = 99;
@@ -2980,157 +3129,201 @@ void GameLogic::actorDiscoveryLoop() {
                     playerCache[actor_ptr] = p;
                 }
             }
-
-            // TODO: 撤离点识别条件过于宽松（会误报），需优化
+            // 撤离点
             else if (class_name.find("ExitTrigger") != std::string::npos && class_name.find("BP_PlayerExit") != std::string::npos) {
                 CachedStatic s{};
                 s.actor_ptr = actor_ptr;
                 s.cls = StaticClass::ExtractionPoint;
-                //s.root_component_ptr = read<ULONGLONG>(actor_ptr + Offsets::RootComponent) >> 4;
                 s.root_component_ptr = decrypt_shift(actor_ptr + Offsets::RootComponent);
-                if (!s.root_component_ptr) continue;
-
-                s.location = read_enc_location(s.root_component_ptr);
-                if (!valid_location(s.location)) {
-                    if (g_cfg.debug.load()) std::cout << "[Debug] Extraction Actor 0x" << std::hex << actor_ptr << " location invalid, skipping." << std::dec << std::endl;
-                    continue;
-                }
-
-                ExtractionCreatePacket pkt;
-                pkt.header.type = PacketType::EXTRACTION_CREATE;
-                pkt.actor_id = s.actor_ptr;
-                pkt.world_location = { s.location.x, s.location.y, s.location.z };
-                strncpy_s(pkt.name, u8"撤离点", _TRUNCATE);
-                networkServer.send_packet(&pkt, sizeof(pkt));
-                {
-                    std::unique_lock lk(staticCacheMutex);
-                    staticCache[actor_ptr] = s;
+                if (s.root_component_ptr && valid_location(read_enc_location(s.root_component_ptr))) {
+                    is_relevant = true;
+                    s.location = read_enc_location(s.root_component_ptr);
+                    ExtractionCreatePacket pkt;
+                    pkt.header.type = PacketType::EXTRACTION_CREATE;
+                    pkt.actor_id = s.actor_ptr;
+                    pkt.world_location = { s.location.x, s.location.y, s.location.z };
+                    strncpy_s(pkt.name, u8"撤离点", _TRUNCATE);
+                    networkServer.send_packet(&pkt, sizeof(pkt));
+                    {
+                        std::unique_lock lk(staticCacheMutex);
+                        staticCache[actor_ptr] = s;
+                    }
                 }
             }
+            // 静态物品/容器/尸体
             else {
                 CachedStatic s{};
                 s.actor_ptr = actor_ptr;
                 s.object_id = object_id;
                 s.class_name = class_name;
-                //s.root_component_ptr = read<ULONGLONG>(actor_ptr + Offsets::RootComponent) >> 4;
                 s.root_component_ptr = decrypt_shift(actor_ptr + Offsets::RootComponent);
-                if (!s.root_component_ptr) continue;
 
-                s.location = read_enc_location(s.root_component_ptr);
-                if (!valid_location(s.location)) {
-                    if (is_dead_body_class(class_name)) {
-                        if (g_cfg.debug.load()) std::cout << "[Debug] New Dead Body Actor 0x" << std::hex << actor_ptr << " location invalid, adding to pending." << std::dec << std::endl;
-                        std::unique_lock lk(pendingActorsMutex);
-                        pendingActors[actor_ptr] = 0;
-                    }
-                    else if (g_cfg.debug.load()) {
-                        std::cout << "[Debug] Static Actor 0x" << std::hex << actor_ptr << " (" << class_name << ") location invalid, skipping." << std::dec << std::endl;
-                    }
-                    continue;
-                }
+                if (s.root_component_ptr) {
+                    s.location = read_enc_location(s.root_component_ptr);
 
-                bool should_process_static = false;
-                bool is_hacker_pc = class_name.find("BP_Interact_Computer_C") != std::string::npos;
-                bool is_password_door = class_name.find("BP_Interactor_CodedLock") != std::string::npos;
-                StaticClass byType = StaticClass::Unknown;
-
-                if (is_hacker_pc || is_password_door) {
-                    s.cls = StaticClass::HackerPC;
-                    should_process_static = true;
-                }
-                else if (is_dead_body_class(class_name)) {
-                    ULONGLONG owner_ps_ptr = read<ULONGLONG>(actor_ptr + Offsets::OwnerPlayerState);
-                    if (!owner_ps_ptr) {
-                        if (g_cfg.debug.load()) std::cout << "[Debug] New Dead Body Actor 0x" << std::hex << actor_ptr << " owner info missing, adding to pending." << std::dec << std::endl;
-                        std::unique_lock lk(pendingActorsMutex);
-                        pendingActors[actor_ptr] = 0;
+                    // 尸体位置无效时加入 Pending，不算垃圾
+                    if (!valid_location(s.location)) {
+                        if (is_dead_body_class(class_name)) {
+                            is_relevant = true; // 暂时标记为有用，放入 pending
+                            std::unique_lock lk(pendingActorsMutex);
+                            pendingActors[actor_ptr] = 0;
+                        }
                     }
                     else {
-                        s.cls = StaticClass::PlayerLootBox;
-                        s.box_owner = (read<BYTE>(owner_ps_ptr + Offsets::bIsABot) != 0) ? LootBoxOwnerType::Player : LootBoxOwnerType::AI;
-                        should_process_static = true;
+                        bool is_hacker_pc = class_name.find("BP_Interact_Computer_C") != std::string::npos;
+                        bool is_pwd_door = class_name.find("BP_Interactor_CodedLock") != std::string::npos;
+                        BYTE mt = read<BYTE>(actor_ptr + Offsets::MarkingItemType);
+                        StaticClass byType = classify_by_marking_type(mt);
+
+                        if (is_hacker_pc || is_pwd_door) {
+                            s.cls = StaticClass::HackerPC;
+                            is_relevant = true;
+                        }
+                        else if (is_dead_body_class(class_name)) {
+                            ULONGLONG owner_ps = read<ULONGLONG>(actor_ptr + Offsets::OwnerPlayerState);
+                            if (!owner_ps) {
+                                is_relevant = true; // 暂时放入 pending
+                                std::unique_lock lk(pendingActorsMutex);
+                                pendingActors[actor_ptr] = 0;
+                            }
+                            else {
+                                s.cls = StaticClass::PlayerLootBox;
+                                s.box_owner = (read<BYTE>(owner_ps + Offsets::bIsABot) != 0) ? LootBoxOwnerType::Player : LootBoxOwnerType::AI;
+                                is_relevant = true;
+                            }
+                        }
+                        else if (byType == StaticClass::Item || class_name.find("InventoryPickup") != std::string::npos) {
+                            s.cls = StaticClass::Item;
+                            s.item_component_ptr = read<ULONGLONG>(actor_ptr + Offsets::FDFMCommonItemRow);
+                            if (s.item_component_ptr) is_relevant = true;
+                        }
+                        else if (match_container_keywords(class_name) || byType == StaticClass::Container || byType == StaticClass::Safe) {
+                            if (!container_strict_blacklist(class_name)) {
+                                s.cls = (byType != StaticClass::Unknown && byType != StaticClass::HackerPC) ? byType : StaticClass::Container;
+                                is_relevant = true;
+                            }
+                        }
+
+                        if (is_relevant && s.cls != StaticClass::Unknown) {
+                            // 发送数据包逻辑
+                            if (s.cls == StaticClass::Item) {
+                                ItemCreatePacket pkt;
+                                pkt.header.type = PacketType::ITEM_CREATE;
+                                pkt.actor_id = s.actor_ptr;
+                                std::string name = get_item_display_name(s.item_component_ptr);
+                                if (!name.empty()) {
+                                    strncpy_s(pkt.name, name.c_str(), _TRUNCATE);
+                                    pkt.price = read<int>(s.item_component_ptr + Offsets::InitialGuidePrice);
+                                    pkt.quality = read<int>(s.item_component_ptr + Offsets::Quality);
+                                    pkt.world_location = { s.location.x, s.location.y, s.location.z };
+                                    networkServer.send_packet(&pkt, sizeof(pkt));
+                                }
+                            }
+                            else if (s.cls == StaticClass::HackerPC) {
+                                HackerPcCreatePacket pkt;
+                                pkt.header.type = PacketType::HACKER_PC_CREATE;
+                                pkt.actor_id = s.actor_ptr;
+                                pkt.world_location = { s.location.x, s.location.y, s.location.z };
+                                if (is_pwd_door) {
+                                    strncpy_s(pkt.name, u8"密码门", _TRUNCATE);
+                                    pkt.password = read<int32_t>(s.actor_ptr + Offsets::PwdSum);
+                                }
+                                else {
+                                    strncpy_s(pkt.name, u8"骇客电脑", _TRUNCATE);
+                                    pkt.password = read<int32_t>(s.actor_ptr + Offsets::Password);
+                                }
+                                if (pkt.password > 100 && pkt.password < 10000) {
+                                    auto open_state = try_read_open_state_once(s.actor_ptr, s.cls);
+                                    pkt.is_looted = open_state.has_value() ? open_state.value() : false;
+                                    s.is_opened = pkt.is_looted;
+                                    networkServer.send_packet(&pkt, sizeof(pkt));
+                                }
+                            }
+                            else {
+                                BoxCreatePacket pkt;
+                                pkt.header.type = PacketType::BOX_CREATE;
+                                pkt.actor_id = s.actor_ptr;
+                                std::string pretty = (s.cls == StaticClass::PlayerLootBox) ?
+                                    ((s.box_owner == LootBoxOwnerType::Player) ? u8"玩家盒子" : u8"人机盒子") :
+                                    translate_container_name(s.class_name);
+                                if (!pretty.empty()) {
+                                    strncpy_s(pkt.name, pretty.c_str(), _TRUNCATE);
+                                    auto open_state = try_read_open_state_once(s.actor_ptr, s.cls);
+                                    pkt.is_looted = open_state.has_value() ? open_state.value() : false;
+                                    s.is_opened = pkt.is_looted;
+                                    pkt.world_location = { s.location.x, s.location.y, s.location.z };
+                                    networkServer.send_packet(&pkt, sizeof(pkt));
+                                }
+                            }
+                            {
+                                std::unique_lock lk(staticCacheMutex);
+                                staticCache[actor_ptr] = s;
+                            }
+                        }
                     }
+                }
+            }
+
+            // 关键逻辑：如果判断完这个 Actor 既不是玩家也不是物品（is_relevant == false），
+            // 则将其加入黑名单，永久拉黑（直到退出对局），不再浪费 CPU 读取它。
+            if (!is_relevant) {
+                ignoredCache.insert(actor_ptr);
+            }
+
+        } // End Loop
+
+        // 如果自然跑完了整个数组，重置游标
+        if (processed_unknown_actors <= NEW_ACTOR_BUDGET) {
+            current_scan_index = 0;
+        }
+
+        {
+            std::vector<ULONGLONG> items_to_verify;
+            {
+                std::shared_lock lk(staticCacheMutex);
+                size_t count = 0;
+                auto it = staticCache.begin();
+                if (verify_item_index < staticCache.size()) {
+                    std::advance(it, verify_item_index);
                 }
                 else {
-                    BYTE mt = read<BYTE>(actor_ptr + Offsets::MarkingItemType);
-                    byType = classify_by_marking_type(mt);
-
-                    if (byType == StaticClass::Item || class_name.find("InventoryPickup") != std::string::npos) {
-                        s.cls = StaticClass::Item;
-                        s.item_component_ptr = read<ULONGLONG>(actor_ptr + Offsets::FDFMCommonItemRow);
-                        if (s.item_component_ptr) should_process_static = true;
-                    }
-                    else if (match_container_keywords(class_name) || byType == StaticClass::Container || byType == StaticClass::Safe) {
-                        if (!container_strict_blacklist(class_name)) {
-                            s.cls = (byType != StaticClass::Unknown && byType != StaticClass::HackerPC) ? byType : StaticClass::Container;
-                            should_process_static = true;
-                        }
-                    }
+                    verify_item_index = 0;
+                    it = staticCache.begin();
                 }
 
-                if (should_process_static) {
-                    if (s.cls == StaticClass::Item) {
-                        ItemCreatePacket pkt;
-                        pkt.header.type = PacketType::ITEM_CREATE;
-                        pkt.actor_id = s.actor_ptr;
-                        std::string name = get_item_display_name(s.item_component_ptr);
-                        if (name.empty()) continue;
-                        strncpy_s(pkt.name, name.c_str(), _TRUNCATE);
-                        pkt.price = read<int>(s.item_component_ptr + Offsets::InitialGuidePrice);
-                        pkt.quality = read<int>(s.item_component_ptr + Offsets::Quality);
-                        pkt.world_location = { s.location.x, s.location.y, s.location.z };
-                        networkServer.send_packet(&pkt, sizeof(pkt));
+                // 每帧检查 50 个已缓存物品的状态
+                while (it != staticCache.end() && count < 50) {
+                    if (it->second.cls == StaticClass::Item || it->second.cls == StaticClass::PlayerLootBox || it->second.cls == StaticClass::Container) {
+                        items_to_verify.push_back(it->first);
                     }
-                    else if (s.cls == StaticClass::HackerPC) {
-                        HackerPcCreatePacket pkt;
-                        pkt.header.type = PacketType::HACKER_PC_CREATE;
-                        pkt.actor_id = s.actor_ptr;
-                        pkt.world_location = { s.location.x, s.location.y, s.location.z };
-                        if (is_password_door) {
-                            strncpy_s(pkt.name, u8"密码门", _TRUNCATE);
-                            // TODO: 已知脑机接口的密码可以读取但是密码错误，怀疑偏移有问题，待确认
-                            pkt.password = read<int32_t>(s.actor_ptr + Offsets::PwdSum);
-                        }
-                        else {
-                            strncpy_s(pkt.name, u8"骇客电脑", _TRUNCATE);
-                            pkt.password = read<int32_t>(s.actor_ptr + Offsets::Password);
-                        }
-                        if (pkt.password > 100 && pkt.password < 10000) {
-                            auto open_state = try_read_open_state_once(s.actor_ptr, s.cls);
-                            pkt.is_looted = open_state.has_value() ? open_state.value() : false;
-                            s.is_opened = pkt.is_looted;
-                            s.last_sent_opened_state = s.is_opened;
-                            networkServer.send_packet(&pkt, sizeof(pkt));
-                        }
-                        else {
-                            if (g_cfg.debug.load()) std::cout << "[Debug] Actor 0x" << std::hex << actor_ptr << " (" << (is_password_door ? "Password Door" : "Hacker PC") << ") has invalid password: " << std::dec << pkt.password << ", skipping." << std::endl;
-                            continue;
-                        }
-                    }
-                    else {
-                        BoxCreatePacket pkt;
-                        pkt.header.type = PacketType::BOX_CREATE;
-                        pkt.actor_id = s.actor_ptr;
-                        std::string pretty;
-                        if (s.cls == StaticClass::PlayerLootBox) {
-                            pretty = (s.box_owner == LootBoxOwnerType::Player) ? u8"玩家盒子" : u8"人机盒子";
-                        }
-                        else {
-                            pretty = translate_container_name(s.class_name);
-                        }
-                        if (pretty.empty()) continue;
-                        strncpy_s(pkt.name, pretty.c_str(), _TRUNCATE);
-                        auto open_state = try_read_open_state_once(s.actor_ptr, s.cls);
-                        pkt.is_looted = open_state.has_value() ? open_state.value() : false;
-                        s.is_opened = pkt.is_looted;
-                        s.last_sent_opened_state = s.is_opened;
-                        pkt.world_location = { s.location.x, s.location.y, s.location.z };
-                        networkServer.send_packet(&pkt, sizeof(pkt));
-                    }
+                    ++it;
+                    ++count;
+                    ++verify_item_index;
+                }
+                if (it == staticCache.end()) verify_item_index = 0;
+            }
 
+            for (ULONGLONG ptr : items_to_verify) {
+                // 重新读取 RootComponent 判断有效性
+                // 注意：物品被捡起后，通常 Actor 还在，但 RootComponent 可能被置空或位置归零
+                ULONGLONG root = decrypt_shift(ptr + Offsets::RootComponent);
+                bool needs_destroy = false;
+
+                if (!root) {
+                    needs_destroy = true;
+                }
+                else {
+                    Vector3 loc = read_enc_location(root);
+                    // 如果位置变成 (0,0,0) 或者无效值，说明被捡起/销毁
+                    if (!valid_location(loc)) needs_destroy = true;
+                }
+
+                if (needs_destroy) {
+                    EntityDestroyPacket pkt{ {PacketType::ENTITY_DESTROY}, ptr };
+                    networkServer.send_packet(&pkt, sizeof(pkt));
                     {
                         std::unique_lock lk(staticCacheMutex);
-                        staticCache[actor_ptr] = s;
+                        staticCache.erase(ptr);
                     }
                 }
             }
@@ -3147,9 +3340,7 @@ void GameLogic::actorDiscoveryLoop() {
                     if (it->second.client_knows_about_it) send_destroy_packet(it->first);
                     it = playerCache.erase(it);
                 }
-                else {
-                    ++it;
-                }
+                else { ++it; }
             }
         }
         {
@@ -3159,13 +3350,18 @@ void GameLogic::actorDiscoveryLoop() {
                     send_destroy_packet(it->first);
                     it = staticCache.erase(it);
                 }
-                else {
-                    ++it;
-                }
+                else { ++it; }
             }
         }
-
-        //std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        {
+            // 同样清理忽略列表，防止内存泄漏 (虽然 ULONGLONG 很小，但如果有 Actor 销毁了，黑名单也该删掉)
+            for (auto it = ignoredCache.begin(); it != ignoredCache.end();) {
+                if (seen_this_frame.find(*it) == seen_this_frame.end()) {
+                    it = ignoredCache.erase(it);
+                }
+                else { ++it; }
+            }
+        }
     }
 }
 
@@ -3829,7 +4025,7 @@ void GameLogic::consoleLoop() const {
 
         //if (!g_cfg.debug.load()) clear_console();
 
-        std::cout << "--- OwODeviceIOControl -- [v13.0 - @FangYan] ---\n"
+        std::cout << "--- OwODeviceIOControl -- [v13.1 - @FangYan] ---\n"
             << "Network: " << (networkServer.is_client_connected() ? "Client Connected" : "Waiting for Client...") << "\n"
             << "InMatch: " << (inMatch ? "Yes" : "No") << "\n";
 

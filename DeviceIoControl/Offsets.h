@@ -154,4 +154,7 @@ namespace Offsets
 	// ---------------------------- 人机系统 ----------------------------
 	constexpr ULONG64 AICharacterTag = 0x3690;
 	// constexpr ULONG64 CharacterTags = 0x3690;                  // class ADFMAICharacter : public ADFMCharacter
+
+	// ---------------------------- 大战场 ----------------------------
+	constexpr uintptr_t Camp = 0x0670;
 }
